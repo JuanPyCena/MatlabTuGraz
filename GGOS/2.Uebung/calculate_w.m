@@ -1,4 +1,4 @@
-function result = calculate_w(x, w_in, T_g0, h, r_sun, r_moon, dh, coefficient_F, coefficient_T_r, delta_x)
+function [T_g, w] = calculate_w(x, dt, w_in, T_g0, h, r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x)
     c_20 = x(1);
     c_21 = x(2);
     c_22 = x(3);
@@ -36,6 +36,8 @@ function result = calculate_w(x, w_in, T_g0, h, r_sun, r_moon, dh, coefficient_F
     w_y = w_in(2);
     w_z = w_in(3);
     
+    tr = A + B + C;
+    
     dist_sun   = sqrt(r_sun(1).^2 + r_sun(2).^2 + r_sun(3).^2);
     dist_moon  = sqrt(r_moon(1).^2 + r_moon(2).^2 + r_moon(3).^2);
 
@@ -70,7 +72,5 @@ function result = calculate_w(x, w_in, T_g0, h, r_sun, r_moon, dh, coefficient_F
                                      0   ,  0  , 0];
     
     w = w_in + dt .* (F\(M - (dT_g * w_in) - cross(w_in, (T_g + T_r) * w_in) - cross(w_in,h) - dh)); 
-    
-    result = [T_g,w];
 end
 
