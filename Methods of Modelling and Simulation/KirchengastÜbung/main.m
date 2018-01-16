@@ -1,4 +1,4 @@
-% Übung Kirchengast
+% Ãœbung Kirchengast
 % Felix Sonnleitner, 01430166
 clc;
 clear all;
@@ -17,13 +17,14 @@ stop  = Re + z;
 step  = 0.1;
 
 for i = 1:4
-
     [theta_euler(i,:), r_euler(i,:)] = f_euler(phi0(i), Hn, N0, theta0, begin, step, stop);
     [theta_rk(i,:), r_rk(i,:)]       = f_rungeKutta(phi0(i), Hn, N0, theta0, begin, step, stop);
-
 end
-%%
+
+%% Plot
+
 line = 2;
+
 hold on 
 plot(r_euler(line,1:30/step),theta_euler(line,1:30/step))
 plot(r_rk(line,1:30/step),theta_rk(line,1:30/step))
