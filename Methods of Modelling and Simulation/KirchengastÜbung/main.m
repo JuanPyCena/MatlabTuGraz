@@ -16,6 +16,10 @@ begin = r0;
 stop  = Re + z;
 step  = 0.1;
 
-[theta, r] = f_euler(phi0, Hn, N0, theta0, begin, step, stop);
+[theta_euler, r_euler] = f_euler(phi0, Hn, N0, theta0, begin, step, stop);
+[theta_rk, r_rk]       = f_rungeKutta(phi0, Hn, N0, theta0, begin, step, stop);
 
-plot(r,theta)
+hold on 
+plot(r_euler,theta_euler)
+plot(r_rk,theta_rk)
+hold off
