@@ -14,19 +14,37 @@ r0     = Re;             %km
 
 begin = r0;
 stop  = Re + z;
-step  = 0.1;
+step  = 1;
 
-for i = 1:4
+for i = 1:numel(phi0)
     [theta_euler(i,:), r_euler(i,:)] = f_euler(phi0(i), Hn, N0, theta0, begin, step, stop);
     [theta_rk(i,:), r_rk(i,:)]       = f_rungeKutta(phi0(i), Hn, N0, theta0, begin, step, stop);
 end
 
 %% Plot
 
-line = 2;
-
-hold on 
-plot(r_euler(line,1:30/step),theta_euler(line,1:30/step))
-plot(r_rk(line,1:30/step),theta_rk(line,1:30/step))
-legend('Euler','Rungekutta')
+% polar plot
+figure
+circle = linspace(0,2*pi,500);
+polarplot(circle,Re.*ones(size(circle))-Re, 'o')
+title(['h = ',num2str(step)])
+ax = gca;
+ax.ThetaLim = [-30 30];
+ax.ThetaDir = 'clockwise';
+ax.ThetaZeroLocation = 'top';
+hold on
+for line = 1:numel(phi0)
+    polarplot(theta_euler(line,:), r_euler(line,:).'-Re, '--')
+    polarplot(theta_rk(line,:), r_rk(line,:).'-Re)
+end
+polarplot(circle,z.*ones(size(circle)))
+rlim([r_euler(1)-300-Re  r_euler(end)-Re]);
 hold off
+legendstring = {'R_E = r_0', ...
+                '\phi_{0,E} = 0','\phi_{0,RK} = 0',...
+                '\phi_{0,E} = 30','\phi_{0,RK} = 30',...
+                '\phi_{0,E} = 60','\phi_{0,RK} = 60',...
+                '\phi_{0,E} = 89.9','\phi_{0,RK} = 89.9',...
+                'Satellitenorbit'};
+legend(legendstring)
+
