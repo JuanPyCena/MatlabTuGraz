@@ -1,4 +1,4 @@
-% Übung Kirchengast
+% Ãœbung Kirchengast
 % Felix Sonnleitner, 01430166
 clc;
 clear all;
@@ -16,9 +16,9 @@ begin = r0;
 stop  = Re + z;
 h = [0.01 0.1 1];
 
-polarPlot            = false;
-cartesianPlotFull    = false;
-cartesianPlotReduced = false;
+polarPlot            = true;
+cartesianPlotFull    = true;
+cartesianPlotReduced = true;
 errorPlot            = true;
 
 for n = 1:numel(h)
@@ -86,7 +86,7 @@ for n = 1:numel(h)
    if cartesianPlotReduced
         figure
         hold on
-        title(['Kartesischer Plot f�r die ersten 30 km: h = ',num2str(step)])
+        title(['Kartesischer Plot für die ersten 30 km: h = ',num2str(step)])
         for line = 1:numel(phi0)
             plot(r_euler(line,1:30/step),theta_euler(line,1:30/step), '--')
             plot(r_rk(line,1:30/step), theta_rk(line,1:30/step))
@@ -105,7 +105,7 @@ for n = 1:numel(h)
     if errorPlot
         figure
         hold on
-        title(['Errorplot (RK-Euler)/(RK) f�r die ersten 30 km: h = ',num2str(step)])
+        title(['Errorplot (RK-Euler)/(RK) für die ersten 30 km: h = ',num2str(step)])
         for line = 1:numel(phi0)
             plot(r_euler(line,1:30/step), diff(line,1:30/step))
         end
