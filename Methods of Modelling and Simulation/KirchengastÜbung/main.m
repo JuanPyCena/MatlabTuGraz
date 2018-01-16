@@ -25,6 +25,7 @@ end
 %%
 line = 2;
 hold on 
-plot(r_euler(line,:),theta_euler(line,:))
-plot(r_rk(line,:),theta_rk(line,:))
+plot(r_euler(line,1:30/step),theta_euler(line,1:30/step))
+plot(r_rk(line,1:30/step),theta_rk(line,1:30/step))
+legend('Euler','Rungekutta')
 hold off
