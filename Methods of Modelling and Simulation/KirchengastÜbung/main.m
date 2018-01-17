@@ -34,7 +34,7 @@ for n = 1:numel(h)
         
         euler_curve(i,n) = theta_euler(i,end) * Re;
         rk_curve(i,n)    = theta_rk(i,end) * Re;
-        disp(['Angle phi = ', num2str(phi0(i))])
+        disp(['Angle phi = ', num2str(phi0(i) * (180/pi)])
         disp(['horizontal distance d for euler beams = ', num2str(euler_curve(i,n)),' km for h = ', num2str(step)])
         disp(['horizontal distance d for runge-kutta beams = ', num2str(rk_curve(i,n)),' km for h = ', num2str(step)])
     end
