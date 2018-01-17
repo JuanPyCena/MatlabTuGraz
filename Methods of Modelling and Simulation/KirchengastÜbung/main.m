@@ -1,4 +1,4 @@
-% Ãœbung Kirchengast
+% Uebung Kirchengast
 % Felix Sonnleitner, 01430166
 clc;
 clear all;
@@ -21,6 +21,8 @@ cartesianPlotFull    = true;
 cartesianPlotReduced = true;
 errorPlot            = true;
 
+diary('Output.txt')
+diary on
 for n = 1:numel(h)
     step  = h(n);
     
@@ -28,6 +30,11 @@ for n = 1:numel(h)
     for i = 1:numel(phi0)
         [theta_euler(i,:), r_euler(i,:)] = f_euler(phi0(i), Hn, N0, theta0, begin, step, stop);
         [theta_rk(i,:), r_rk(i,:)]       = f_rungeKutta(phi0(i), Hn, N0, theta0, begin, step, stop);
+        
+        euler_curve(i,n) = theta_euler(i,end) .* Re .* (pi/180);
+        rk_curve(i,n)    = theta_rk(i,end) .* Re .* (pi/180);
+        disp(['horizontal distance d for euler beams = ',num2str(euler_curve(i,n)),' km for h = ', num2str(step)])
+        disp(['horizontal distance d for runge-kutta beams = ',num2str(rk_curve(i,n)),' km for h = ', num2str(step)])
     end
 
     diff = abs((theta_rk - theta_euler)./theta_rk);
@@ -60,6 +67,7 @@ for n = 1:numel(h)
                         '\phi_{0,E} = 89.9','\phi_{0,RK} = 89.9',...
                         'Satellitenorbit'};
         legend(legendstring)
+        print(['Polarplot_', num2str(n)],'-dpdf')
     end
     
    
@@ -80,13 +88,14 @@ for n = 1:numel(h)
                         '\phi_{0,E} = 89.9','\phi_{0,RK} = 89.9'
                         };
         legend(legendstring2)
+        print(['Kartesisch_', num2str(n)],'-dpdf')
    end
    
    % cartesian plot limited
    if cartesianPlotReduced
         figure
         hold on
-        title(['Kartesischer Plot für die ersten 30 km: h = ',num2str(step)])
+        title(['Kartesischer Plot fuer die ersten 30 km: h = ',num2str(step)])
         for line = 1:numel(phi0)
             plot(r_euler(line,1:30/step),theta_euler(line,1:30/step), '--')
             plot(r_rk(line,1:30/step), theta_rk(line,1:30/step))
@@ -99,13 +108,14 @@ for n = 1:numel(h)
                         '\phi_{0,E} = 89.9','\phi_{0,RK} = 89.9'
                         };
         legend(legendstring2)
+        print(['Kartesisch_reduziert_', num2str(n)],'-dpdf')
    end
     
     % Error
     if errorPlot
         figure
         hold on
-        title(['Errorplot (RK-Euler)/(RK) für die ersten 30 km: h = ',num2str(step)])
+        title(['Errorplot (RK-Euler)/(RK) fuer die ersten 30 km: h = ',num2str(step)])
         for line = 1:numel(phi0)
             plot(r_euler(line,1:30/step), diff(line,1:30/step))
         end
@@ -117,6 +127,7 @@ for n = 1:numel(h)
                         '\phi_{0} = 89.9'
                         };
         legend(legendstring3)
+        print(['Error_', num2str(n)],'-dpdf')
     end
     
     if numel(h) > 1
@@ -127,3 +138,4 @@ for n = 1:numel(h)
         r_rk        = [];
     end
 end
+diary off
