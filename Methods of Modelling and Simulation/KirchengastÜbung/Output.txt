@@ -1,16 +1,26 @@
+-----------------------------START--------------------------
+Angle phi = 0
 horizontal distance d for euler beams = 0 km for h = 0.1
 horizontal distance d for runge-kutta beams = 0 km for h = 0.1
-horizontal distance d for euler beams = 5.8604 km for h = 0.1
-horizontal distance d for runge-kutta beams = 5.8603 km for h = 0.1
-horizontal distance d for euler beams = 15.9337 km for h = 0.1
-horizontal distance d for runge-kutta beams = 15.9332 km for h = 0.1
-horizontal distance d for euler beams = 50.0717 km for h = 0.1
-horizontal distance d for runge-kutta beams = 49.4209 km for h = 0.1
+Angle phi = 0.5236
+horizontal distance d for euler beams = 335.7754 km for h = 0.1
+horizontal distance d for runge-kutta beams = 335.7696 km for h = 0.1
+Angle phi = 1.0472
+horizontal distance d for euler beams = 912.9327 km for h = 0.1
+horizontal distance d for runge-kutta beams = 912.9038 km for h = 0.1
+Angle phi = 1.5691
+horizontal distance d for euler beams = 2868.898 km for h = 0.1
+horizontal distance d for runge-kutta beams = 2831.6106 km for h = 0.1
+Angle phi = 0
 horizontal distance d for euler beams = 0 km for h = 1
 horizontal distance d for runge-kutta beams = 0 km for h = 1
-horizontal distance d for euler beams = 5.8686 km for h = 1
-horizontal distance d for runge-kutta beams = 5.8675 km for h = 1
-horizontal distance d for euler beams = 15.9563 km for h = 1
-horizontal distance d for runge-kutta beams = 15.9513 km for h = 1
-horizontal distance d for euler beams = 57.9674 km for h = 1
-horizontal distance d for runge-kutta beams = 50.3023 km for h = 1
+Angle phi = 0.5236
+horizontal distance d for euler beams = 336.2432 km for h = 1
+horizontal distance d for runge-kutta beams = 336.1855 km for h = 1
+Angle phi = 1.0472
+horizontal distance d for euler beams = 914.2315 km for h = 1
+horizontal distance d for runge-kutta beams = 913.9422 km for h = 1
+Angle phi = 1.5691
+horizontal distance d for euler beams = 3321.2862 km for h = 1
+horizontal distance d for runge-kutta beams = 2882.1096 km for h = 1
+----------------------------STOP--------------------------
