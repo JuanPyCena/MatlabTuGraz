@@ -14,7 +14,7 @@ r0     = Re;             %km
 
 begin = r0;
 stop  = Re + z;
-h = [0.01 0.1 1];
+h = [0.1 1];
 
 polarPlot            = true;
 cartesianPlotFull    = true;
