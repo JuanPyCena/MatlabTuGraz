@@ -4,7 +4,7 @@ function [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(fi
 % and the positions of the moon and sun. 
 
     % General constants
-    omega_N = (7.2921151467064e-5);% * 3600;        % [rad/h]
+    omega_N = (7.2921151467064e-5);% * 3600;        % [rad/s]
     Mass    = 5.9737e24;                          % [kg]
     R       = 6378136.6;                          % [m]
     A       = 0.3296108 * Mass * R * R;           % [kg * m^2]
