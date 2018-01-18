@@ -49,20 +49,23 @@ A = zeros(3,10);
 
 T_g = coefficient_T_g .* [((1/sqrt(3)) .* c_20_initial - c_22_initial),        -s_22_initial,          -c_21_initial
                            -s_22_initial,              ((1/sqrt(3)) .* c_20_initial + c_22_initial),   -s_21_initial
-                          -c_21_initial,                   -s_21_initial,               -(2/sqrt(3)) .* c_20_initial]
+                          -c_21_initial,                   -s_21_initial,               -(2/sqrt(3)) .* c_20_initial];
 T_g = T_g + eye(3).*tr/3;        
 
 t = 1;
-stop = 5; % maximum number of iterations
+stop = 20; % maximum number of iterations
 threshold = 0.1; % 10% threshold
-while t < stop
+minimum   = 1e-3;
+while t <= stop
     
     dh = h(:,t+1) - h(:,t);
     
     [T_g_plus_delta_x, w_plus_delta_x] = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x);
     [T_g, w_0]                         = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, zero_delta);
-        
-    A = getA(w_plus_delta_x, w_0, delta_x)
+      
+%     diff = (w_plus_delta_x(1)-w_0(1))/delta_x(1)
+      
+    A = getA(w_plus_delta_x, w_0, delta_x, minimum);
     
     l_0     = w_0;
     l       = reference(:,t);
@@ -74,14 +77,21 @@ while t < stop
     [T_g, w_new] = calculate_w(x_dach, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x);
     
     % relativ difference to the previous iteration
-    diff = abs((w_new-w_0)./w_0)
+    diff = abs((w_new-w_0)./w_0);
     % stop if difference to preious is below threshold value (default: 10%)
     if (max(diff) < threshold)
         break;
     end
-    
+      
     x    = x_dach;
-    w_in = w_new
+    w_in = w_new;
+    
+    if isnan(w_in)
+        disp(["Iteration: ", num2str(t)])
+        disp("w_in is NAN: ")
+        break
+    end
+    
     t    = t + 1;
 end
 

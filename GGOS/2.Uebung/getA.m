@@ -1,4 +1,4 @@
-function A = getA(w_plus_delta,w_0, delta_x)
+function A = getA(w_plus_delta,w_0, delta_x, minimum)
     rows = length(w_0);
     cols = length(delta_x);
     
@@ -12,6 +12,10 @@ function A = getA(w_plus_delta,w_0, delta_x)
               delta_x(j) = 1;
           end
           A(i,j) = (w_plus_delta(i) - w_0(i)) / delta_x(j);
+          
+          if A(i,j) < minimum
+              A(i,j) = 0;
+          end    
        end
     end
         
