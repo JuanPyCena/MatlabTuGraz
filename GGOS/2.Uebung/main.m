@@ -2,6 +2,7 @@ clear all;
 close all;
 clc
 %% General Values
+format long
 
 AAM_FILE = 'ESMGFZ_AAM_v1.0_03h_2004.asc';
 HAM_FILE = 'ESMGFZ_HAM_v1.2_24h_2004.asc';
@@ -37,12 +38,11 @@ coefficient_F   = (omega_N * omega_N * R^5) / (3 * G);
 
 %% Calculation
 dt = 1;
-counter = 1;
 w_in = w_initial.*3600;
 
 
 x          = [c_20_initial, c_21_initial, c_22_initial, s_21_initial, s_22_initial, k_re, k_im, A,  B, C]';
-delta_x    = [1,1,1,1,1,1,1,1,1,1]';
+delta_x    = 0.5 .* x;
 zero_delta = zeros(10,1);
 
 A = zeros(3,10);
@@ -50,52 +50,34 @@ A = zeros(3,10);
 T_g = coefficient_T_g .* [((1/sqrt(3)) .* c_20_initial - c_22_initial) + tr/3,        -s_22_initial,          -c_21_initial
                            -s_22_initial,              ((1/sqrt(3)) .* c_20_initial + c_22_initial) + tr/3,   -s_21_initial
                           -c_21_initial,                   -s_21_initial,               -(2/sqrt(3)) .* c_20_initial + tr/3];
-                      
-for t = 1:dt:1
+t = 1;
+stop = 2;
+threshold = 0.5e-5;
+while t < stop
     
     dh = h(:,t+1) - h(:,t);
     
-   [T_g_plus_delta_x, w_plus_delta_x] = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x);
-   [T_g, w_0]                         = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, zero_delta);
+    %Irgendwo in dieser Funktino ist der Fehler
+    [T_g_plus_delta_x, w_plus_delta_x] = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x);
+    [T_g, w_0]                         = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, zero_delta);
    
-   %Elements for A
-   %w_x derivatives for parameters
-   A(1,1)  = (w_plus_delta_x(1) - w_0(1))/delta_x(1); 
-   A(1,2)  = (w_plus_delta_x(1) - w_0(1))/delta_x(2); 
-   A(1,3)  = (w_plus_delta_x(1) - w_0(1))/delta_x(3); 
-   A(1,4)  = (w_plus_delta_x(1) - w_0(1))/delta_x(4); 
-   A(1,5)  = (w_plus_delta_x(1) - w_0(1))/delta_x(5); 
-   A(1,6)  = (w_plus_delta_x(1) - w_0(1))/delta_x(6); 
-   A(1,7)  = (w_plus_delta_x(1) - w_0(1))/delta_x(7); 
-   A(1,8)  = (w_plus_delta_x(1) - w_0(1))/delta_x(8);
-   A(1,9)  = (w_plus_delta_x(1) - w_0(1))/delta_x(9); 
-   A(1,10) = (w_plus_delta_x(1) - w_0(1))/delta_x(10); 
-   
-   %w_y derivatives for parameters
-   A(2,1)  = (w_plus_delta_x(2) - w_0(2))/delta_x(1); 
-   A(2,2)  = (w_plus_delta_x(2) - w_0(2))/delta_x(2); 
-   A(2,3)  = (w_plus_delta_x(2) - w_0(2))/delta_x(3); 
-   A(2,4)  = (w_plus_delta_x(2) - w_0(2))/delta_x(4); 
-   A(2,5)  = (w_plus_delta_x(2) - w_0(2))/delta_x(5); 
-   A(2,6)  = (w_plus_delta_x(2) - w_0(2))/delta_x(6); 
-   A(2,7)  = (w_plus_delta_x(2) - w_0(2))/delta_x(7); 
-   A(2,8)  = (w_plus_delta_x(2) - w_0(2))/delta_x(8);
-   A(2,9)  = (w_plus_delta_x(2) - w_0(2))/delta_x(9); 
-   A(2,10) = (w_plus_delta_x(2) - w_0(2))/delta_x(10); 
-   
-   %w_z derivatives for parameters
-   A(3,1)  = (w_plus_delta_x(3) - w_0(3))/delta_x(1); 
-   A(3,2)  = (w_plus_delta_x(3) - w_0(3))/delta_x(2); 
-   A(3,3)  = (w_plus_delta_x(3) - w_0(3))/delta_x(3); 
-   A(3,4)  = (w_plus_delta_x(3) - w_0(3))/delta_x(4); 
-   A(3,5)  = (w_plus_delta_x(3) - w_0(3))/delta_x(5); 
-   A(3,6)  = (w_plus_delta_x(3) - w_0(3))/delta_x(6); 
-   A(3,7)  = (w_plus_delta_x(3) - w_0(3))/delta_x(7); 
-   A(3,8)  = (w_plus_delta_x(3) - w_0(3))/delta_x(8);
-   A(3,9)  = (w_plus_delta_x(3) - w_0(3))/delta_x(9); 
-   A(3,10) = (w_plus_delta_x(3) - w_0(3))/delta_x(10); 
-   
-   disp(A * delta_x)
+    A = getA(w_plus_delta_x, w_0, delta_x);
+    
+    l_0     = w_0;
+    l       = reference(:,t);
+    delta_l = l - l_0;
+    
+    delta_x_dach = ((A' * A) \ A') * delta_l;
+    x_dach       = x + delta_x_dach;
+    
+    [T_g, w_new] = calculate_w(x_dach, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x);
+    if (max(abs(w_new-w_0)) < threshold)
+        break;
+    end
+    
+    x    = x_dach;
+    w_in = w_new;
+    t    = t + 1;
 end
 
 
