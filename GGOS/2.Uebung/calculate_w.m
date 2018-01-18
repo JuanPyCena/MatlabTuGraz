@@ -55,9 +55,9 @@ function [T_g, w] = calculate_w(x, dt, w_in, T_g0, h, r_sun, r_moon, dh, coeffic
     T_g_c2 = coefficient_T_g .* [-s_22; ((1/sqrt(3)) .* c_20 + c_22); -s_21];
     T_g_c3 = coefficient_T_g .* [-c_21; -s_21; -(2/sqrt(3)) .* c_20];
     
-    T_g_c1 = T_g_c1(1) + tr/3;
-    T_g_c2 = T_g_c2(2) + tr/3;
-    T_g_c3 = T_g_c3(3) + tr/3;
+    T_g_c1(1) = T_g_c1(1) + tr/3;
+    T_g_c2(2) = T_g_c2(2) + tr/3;
+    T_g_c3(3) = T_g_c3(3) + tr/3;
     
     T_g = [T_g_c1, T_g_c2, T_g_c3];
     

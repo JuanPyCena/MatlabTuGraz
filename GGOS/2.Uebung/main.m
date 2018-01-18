@@ -18,10 +18,10 @@ s_21_initial = grav_potent(3, 1);
 c_22_initial = grav_potent(4, 1);
 s_22_initial = grav_potent(5, 1);
 
-G       = (6.674e-11) * (3600 * 3600);        % [m^3/(kg* h^2)]
-GM_sun  = (1.32712442076e20) * (3600 * 3600); % [m^3/ h^2]
-GM_moon = (4.9027779e12) * (3600 * 3600);     % [m^3/ h^2]
-omega_N = (7.2921151467064e-5) * 3600;        % [rad/h]
+G       = (6.674e-11);% * (3600 * 3600);        % [m^3/(kg* h^2)]
+GM_sun  = (1.32712442076e20);% * (3600 * 3600); % [m^3/ h^2]
+GM_moon = (4.9027779e12);% * (3600 * 3600);     % [m^3/ h^2]
+omega_N = (7.2921151467064e-5);% * 3600;        % [rad/h]
 Mass    = 5.9737e24;                          % [kg]
 R       = 6378136.6;                          % [m]
 A       = 0.3296108 * Mass * R * R;           % [kg * m^2]
@@ -38,30 +38,31 @@ coefficient_F   = (omega_N * omega_N * R^5) / (3 * G);
 
 %% Calculation
 dt = 1;
-w_in = w_initial.*3600;
+w_in = w_initial;%.*3600
 
 
 x          = [c_20_initial, c_21_initial, c_22_initial, s_21_initial, s_22_initial, k_re, k_im, A,  B, C]';
-delta_x    = 0.5 .* x;
+delta_x    =  0.5 .* x;
 zero_delta = zeros(10,1);
 
 A = zeros(3,10);
 
-T_g = coefficient_T_g .* [((1/sqrt(3)) .* c_20_initial - c_22_initial) + tr/3,        -s_22_initial,          -c_21_initial
-                           -s_22_initial,              ((1/sqrt(3)) .* c_20_initial + c_22_initial) + tr/3,   -s_21_initial
-                          -c_21_initial,                   -s_21_initial,               -(2/sqrt(3)) .* c_20_initial + tr/3];
+T_g = coefficient_T_g .* [((1/sqrt(3)) .* c_20_initial - c_22_initial),        -s_22_initial,          -c_21_initial
+                           -s_22_initial,              ((1/sqrt(3)) .* c_20_initial + c_22_initial),   -s_21_initial
+                          -c_21_initial,                   -s_21_initial,               -(2/sqrt(3)) .* c_20_initial]
+T_g = T_g + eye(3).*tr/3;        
+
 t = 1;
-stop = 2;
-threshold = 0.5e-5;
+stop = 5; % maximum number of iterations
+threshold = 0.1; % 10% threshold
 while t < stop
     
     dh = h(:,t+1) - h(:,t);
     
-    %Irgendwo in dieser Funktino ist der Fehler
     [T_g_plus_delta_x, w_plus_delta_x] = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x);
     [T_g, w_0]                         = calculate_w(x, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, zero_delta);
-   
-    A = getA(w_plus_delta_x, w_0, delta_x);
+        
+    A = getA(w_plus_delta_x, w_0, delta_x)
     
     l_0     = w_0;
     l       = reference(:,t);
@@ -71,12 +72,16 @@ while t < stop
     x_dach       = x + delta_x_dach;
     
     [T_g, w_new] = calculate_w(x_dach, dt, w_in, T_g, h(:,t), r_sun, r_moon, dh, coefficient_F,coefficient_T_g, coefficient_T_r, GM_sun, GM_moon, delta_x);
-    if (max(abs(w_new-w_0)) < threshold)
+    
+    % relativ difference to the previous iteration
+    diff = abs((w_new-w_0)./w_0)
+    % stop if difference to preious is below threshold value (default: 10%)
+    if (max(diff) < threshold)
         break;
     end
     
     x    = x_dach;
-    w_in = w_new;
+    w_in = w_new
     t    = t + 1;
 end
 

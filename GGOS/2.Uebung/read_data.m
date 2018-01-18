@@ -4,7 +4,7 @@ function [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(fi
 % and the positions of the moon and sun. 
 
     % General constants
-    omega_N = (7.2921151467064e-5) * 3600;        % [rad/h]
+    omega_N = (7.2921151467064e-5);% * 3600;        % [rad/h]
     Mass    = 5.9737e24;                          % [kg]
     R       = 6378136.6;                          % [m]
     A       = 0.3296108 * Mass * R * R;           % [kg * m^2]
@@ -24,11 +24,11 @@ function [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(fi
     
     % defining the timestep by checking the fileName
     if ~isempty(strfind(fileName_motionMomentum, '_24h_'))
-        step = 24
+        step = 24;
     elseif ~isempty(strfind(fileName_motionMomentum, '_03h_'))
-        step = 3
+        step = 3;
     else
-        step = 1
+        step = 1;
     end
     
     % allocating the motionMomentum
