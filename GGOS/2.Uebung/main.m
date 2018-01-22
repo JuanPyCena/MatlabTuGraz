@@ -3,7 +3,7 @@ close all;
 clc
 format long
 
-delta_val = 1e-15;
+delta_val = 1e-13;
 stop = 365;
 
 AAM_FILE = 'ESMGFZ_AAM_v1.0_03h_2004.asc';
@@ -11,18 +11,40 @@ HAM_FILE = 'ESMGFZ_HAM_v1.2_24h_2004.asc';
 OAM_FILE = 'ESMGFZ_OAM_v1.0_03h_2004.asc';
 
 FILE = OAM_FILE;
-numParam    = 2;
+numParam    = 1:7; % Set from - to, to calculate for the parameters inside the inverall. See table below
 maxNumParam = 10;
+
+% Params: 
+% 1: k_re
+% 2: k_im
+% 3: c_20
+% 4: c_21
+% 5: s_21
+% 6: c_22
+% 7: s_22
+% 8: A
+% 9: B
+% 10: C
+
 %% Creating the Text files used to read the w_0 and w_deltas
+
+% delete all previous files
+disp('Delete all omega files before creating new ones')
+for i = 1:maxNumParam
+    if exist(['w_', num2str(i),'.txt'], 'file')==2
+      disp(['Delete: w_', num2str(i),'.txt'])
+      delete(['w_', num2str(i),'.txt']);
+    end
+end
 
 disp('Creating Files to read in omegas')
 [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(FILE);
 
-for i = 1:(numParam+1)
-    disp(['w_', num2str(i) ,'.txt'])
+for i = 1:(max(numParam) - min(numParam) +2)
+    disp(['creating file: w_', num2str(i) ,'.txt'])
     delta    = zeros(1,maxNumParam);
     delta(i) = delta_val;
-    if i == numParam+1
+    if i == (max(numParam) - min(numParam) +2)
         delta(i) = 0;
     end
     
@@ -123,35 +145,13 @@ end
 disp('Reading in omegas and calculating delta_l')
 [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(FILE);
 
-w_0_struct = importdata(['w_', num2str(numParam+1), '.txt']);
+w_0_struct = importdata(['w_', num2str(max(numParam) - min(numParam) +2), '.txt']);
 w_0        = w_0_struct.data;
 
-for i = 1:numParam
+for i = 1:(max(numParam) - min(numParam) +1)
     w_delta_struct = importdata(['w_', num2str(i), '.txt']);
     w_delta(:,i)   = w_delta_struct.data;
 end
-
-% w_delta_struct_1  = importdata('w_1.txt');
-% w_delta_struct_2  = importdata('w_2.txt');
-% w_delta_struct_3  = importdata('w_3.txt');
-% w_delta_struct_4  = importdata('w_4.txt');
-% w_delta_struct_5  = importdata('w_5.txt');
-% w_delta_struct_6  = importdata('w_6.txt');
-% w_delta_struct_7  = importdata('w_7.txt');
-% w_delta_struct_8  = importdata('w_8.txt');
-% w_delta_struct_9  = importdata('w_9.txt');
-% w_delta_struct_10 = importdata('w_10.txt');
-% 
-% w_delta(:,1)  = w_delta_struct_1.data;
-% w_delta(:,2)  = w_delta_struct_2.data;
-% w_delta(:,3)  = w_delta_struct_3.data;
-% w_delta(:,4)  = w_delta_struct_4.data;
-% w_delta(:,5)  = w_delta_struct_5.data;
-% w_delta(:,6)  = w_delta_struct_6.data;
-% w_delta(:,7)  = w_delta_struct_7.data;
-% w_delta(:,8)  = w_delta_struct_8.data;
-% w_delta(:,9)  = w_delta_struct_9.data;
-% w_delta(:,10) = w_delta_struct_10.data;
 
 l_x = reference(1, 1:(numel(w_0)/3));
 l_y = reference(2, 1:(numel(w_0)/3));
@@ -169,7 +169,7 @@ delta_l    = l - w_0;
 %% Calculation
 
 disp('Creating A-Matrix')
-for i = 1:numParam
+for i = 1:(max(numParam) - min(numParam) +1)
     A_mat(:,i) = (w_delta(:,i) - w_0) ./ delta_val;
 end
 
