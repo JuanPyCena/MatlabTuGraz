@@ -4,15 +4,14 @@ clc
 format long
 
 delta_val = 1e-15;
-stop = 3;
-
+stop = 365;
 
 AAM_FILE = 'ESMGFZ_AAM_v1.0_03h_2004.asc';
 HAM_FILE = 'ESMGFZ_HAM_v1.2_24h_2004.asc';
 OAM_FILE = 'ESMGFZ_OAM_v1.0_03h_2004.asc';
 
 FILE = OAM_FILE;
-numParam    = 5;
+numParam    = 2;
 maxNumParam = 10;
 %% Creating the Text files used to read the w_0 and w_deltas
 
@@ -30,11 +29,11 @@ for i = 1:(numParam+1)
     r_moon = r_moon;
     r_sun = r_sun;
     initial = reference(:,1);
-    c_20 = grav_potent(1, :) + delta(1);
-    c_21 = grav_potent(2, :) + delta(2);
-    s_21 = grav_potent(3, :) + delta(3);
-    c_22 = grav_potent(4, :) + delta(4);
-    s_22 = grav_potent(5, :) + delta(5);
+    c_20 = grav_potent(1, :) + delta(3);
+    c_21 = grav_potent(2, :) + delta(4);
+    s_21 = grav_potent(3, :) + delta(5);
+    c_22 = grav_potent(4, :) + delta(6);
+    s_22 = grav_potent(5, :) + delta(7);
 
     G       = (6.674e-11) * (3600 * 3600);        % [m^3/(kg* h^2)]
     GM_sun  = (1.32712442076e20) * (3600 * 3600); % [m^3/ h^2]
@@ -42,12 +41,12 @@ for i = 1:(numParam+1)
     omega_N = (7.2921151467064e-5) * 3600;        % [rad/h]
     Mass    = 5.9737e24;                          % [kg]
     R       = 6378136.6;                          % [m]
-    A       = 0.3296108 * Mass * R * R + delta(6);           % [kg * m^2]
-    B       = 0.3296108 * Mass * R * R + delta(7);           % [kg * m^2]
-    C       = 0.3307007 * Mass * R * R + delta(8);           % [kg * m^2]
+    A       = 0.3296108 * Mass * R * R + delta(8);           % [kg * m^2]
+    B       = 0.3296108 * Mass * R * R + delta(9);           % [kg * m^2]
+    C       = 0.3307007 * Mass * R * R + delta(10);           % [kg * m^2]
     tr      = A + B + C;                          % [kg * m^2]
-    k_re    = 0.3077 + delta(9);                             % [-] 
-    k_im    = 0.0036 + delta(10);                             % [-] 
+    k_re    = 0.3077 + delta(1);                             % [-] 
+    k_im    = 0.0036 + delta(2);                             % [-] 
 
     coefficient_T_g = sqrt(5/3) * Mass * R * R;
     coefficient_T_r = (omega_N * R^5) / (3 * G);
