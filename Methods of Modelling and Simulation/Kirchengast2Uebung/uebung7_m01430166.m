@@ -8,9 +8,13 @@ close all;
 clc;
 
 N_realizations_vec        = [10 50 300];
+sigma_x                   = [0.1 0.0001];
+sigma_y                   = 0.01;
+sigma                     = [sigma_x(1), sigma_y];
 result_Xeigenvalues_check = [];
 result_Aeigenvalues_check = [];
 result_yestim_check       = [];
+result_dyestim_check      = [];
 result_Aestimate          = [];
 %%
 for i = 1:numel(N_realizations_vec)
@@ -27,9 +31,6 @@ for i = 1:numel(N_realizations_vec)
     Aeigenvalues_check = eig(Atrue' * Atrue);
     x_inv_check        = (inv(Atrue' * Atrue)*Atrue')*ytrue;
  
-    sigma_x        = 0.1;
-    sigma_y        = 0.01;
-    sigma          = [sigma_x, sigma_y];
     X              = zeros(N_realizations, 3);
     Y              = zeros(N_realizations, 4);
 
@@ -53,5 +54,9 @@ for i = 1:numel(N_realizations_vec)
     result_Xeigenvalues_check = [result_Xeigenvalues_check, Xeigenvalues_check];
     result_Aeigenvalues_check = [result_Aeigenvalues_check, Aeigenvalues_check];
     result_yestim_check       = [result_yestim_check, yestim_check];
+    result_yestim_check       = [result_dyestim_check, dyestim_check];
     result_Aestimate          = [result_Aestimate, Aestimate];
+    
+    disp(['Rank(Aestimate): ', num2str(rank(Aestimate))])
+    disp(['Rank(X): ', num2str(rank(X))])
 end
