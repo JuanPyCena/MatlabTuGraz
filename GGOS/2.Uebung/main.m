@@ -1,6 +1,8 @@
 clear all;
 close all;
 clc
+warning('off','all')
+warning
 format long
 
 % Logging all console output
@@ -11,17 +13,18 @@ end
 diary('LogOutput.txt')
 diary on
 
-delta_val = 1e-6;
-stop = 365;
-stop_iterating = 1;
+delta_val = 0
+stop = 365
+stop_iterating = 5
 iteration = 1;
+threshold = 100000
 
 AAM_FILE = 'ESMGFZ_AAM_v1.0_03h_2004.asc';
 HAM_FILE = 'ESMGFZ_HAM_v1.2_24h_2004.asc';
 OAM_FILE = 'ESMGFZ_OAM_v1.0_03h_2004.asc';
 
-numParam    = 1:6; % Set from - to, to calculate for the parameters inside the inverall. See table below
-maxNumParam = 6;
+numParam    = 1:6 % Set from - to, to calculate for the parameters inside the inverall. See table below
+maxNumParam = 6
 
 % Params: 
 % 1: influence of HAM
@@ -31,7 +34,7 @@ maxNumParam = 6;
 % 5: k_re
 % 6: k_im
 
-x_vec = ones(maxNumParam,1) .* delta_val;
+x_vec = ones(numel(numParam),1) .* delta_val
 
 %% Read in all relevant data
 
@@ -51,8 +54,9 @@ x_vec = ones(maxNumParam,1) .* delta_val;
 %% Main Loop
 while iteration <= stop_iterating
     % delete all previous files
+    disp(['Iteration: ', num2str(iteration)])
     disp('Delete all omega files before creating new ones')
-    for i = 1:maxNumParam
+    for i = 1:(maxNumParam+1)
         if exist(['w_', num2str(i),'.txt'], 'file')==2
           disp(['Deleting: w_', num2str(i),'.txt'])
           delete(['w_', num2str(i),'.txt']);
@@ -71,12 +75,12 @@ while iteration <= stop_iterating
             x(i) = x_vec(i);
         end
 
-        result_m = calcuate_w(x, initial, M, h, grav_potent_ham,...
+        result_calculate = calcuate_w(x, initial, M, h, grav_potent_ham,...
                               grav_potent_aam, grav_potent_oam, A, B, C, ...
                               coefficient_T_g, coefficient_T_r, coefficient_F, ...
                               timespan, stop);
-
-        writetable(table(result_m), ['w_' , num2str(i), '.txt'])
+        T = table(result_calculate);
+        writetable(T, ['w_' , num2str(i), '.txt'])
 
         % Clearing aaray to avoid conflicts
         T_g_c1 = [];
@@ -87,14 +91,12 @@ while iteration <= stop_iterating
     %% Reading in w_0 and w_deltas
     disp('Reading in omegas and calculating delta_l')
     [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(HAM_FILE);
-
-    w_0_struct = importdata(['w_', num2str(max(numParam) - min(numParam) +2), '.txt']);
-    w_0        = w_0_struct.data;
+    
+    w_0 = table2array(readtable(['w_', num2str(max(numParam) - min(numParam) +2), '.txt']));
 
     for i = 1:(max(numParam) - min(numParam) +1)
         disp(['Read in: w_', num2str(i), '.txt'])
-        w_delta_struct = importdata(['w_', num2str(i), '.txt']);
-        w_delta(:,i)   = w_delta_struct.data;
+        w_delta(:,i) = table2array(readtable(['w_', num2str(i), '.txt']));
     end
 
     l_x = reference(1, 1:(numel(w_0)/3));
@@ -114,12 +116,20 @@ while iteration <= stop_iterating
     disp('Creating A-Matrix')
     diff = [];
     for i = 1:(max(numParam) - min(numParam) +1)
-        diff = [diff , [w_delta(:,i) - w_0]];
+%         diff = [diff , [w_delta(:,i) - w_0]];
         A_mat(:,i) = (w_delta(:,i) - w_0) ./ delta_val;
     end
     
     %% Calculatin the new x-vec
     disp('Calculating delta_x_dach')
+    
+    % Preventing NAN and INF
+    for i = 1:numel(A_mat)
+       if isnan(A_mat(i)) | isinf(A_mat(i))
+           A_mat(i) = 0;
+       end
+    end
+    
     % Singulärwertzerlegung
     [U,S,V] = svd(A_mat,'econ');
 
@@ -130,33 +140,44 @@ while iteration <= stop_iterating
 
     pseudo_inverse = V * lambdaInv * U';
     % pseudo_inverse = ((A_mat' * A_mat) \ A_mat');
-    delta_x_dach =  pseudo_inverse * delta_l
+    delta_x_dach   =  pseudo_inverse * delta_l
 
-    x_dach = x_vec + delta_x_dach
+    x_dach    = x_vec + delta_x_dach
+    x_vec     = x_dach;
+    
+    x_check = zeros(1,maxNumParam);
 
-    x_vec = x_dach;
+    for i = 1:numel(x_dach)
+       x_check(i) = x_dach(i);
+    end
 
+    result_m = calcuate_w(x_check, initial, M, h, grav_potent_ham,...
+                          grav_potent_aam, grav_potent_oam, A, B, C, ...
+                          coefficient_T_g, coefficient_T_r, coefficient_F, ...
+                          timespan, stop);
+    
+    % prepare the values for checking
+    w_check = [];
+
+    for i = 1:3:numel(result_m)
+        w_check = [w_check, [result_m(i); result_m(i+1); result_m(i+2)]];
+    end
+    
+    if (abs(max(w_check - reference(:, 1:length(w_check)))) < threshold)
+        disp(['JOSEF: ', num2str(iteration)])
+        break 
+    end
+    
     iteration = iteration +1;
-
+    
+    % Clear after every iteratio to avoid errors
+    clear w_delta
+    clear w_0
 end 
 
 %% Plot the final results
-result_m = calcuate_w(x_dach, initial, M, h, grav_potent_ham,...
-                      grav_potent_aam, grav_potent_oam, A, B, C, ...
-                      coefficient_T_g, coefficient_T_r, coefficient_F, ...
-                      timespan, stop);
-                  
-                 
-
-% prepare the values for plotting
-plot_w = [];
-
-for i = 1:3:numel(result_m)
-    plot_w = [plot_w, [result_m(i); result_m(i+1); result_m(i+2)]];
-end
-
-xp        = (R/omega_N) .* plot_w(1,:);
-yp        = (R/omega_N) .* plot_w(2,:);
+xp        = (R/omega_N) .* w_check(1,:);
+yp        = (R/omega_N) .* w_check(2,:);
 
 plot(xp, yp)
 
