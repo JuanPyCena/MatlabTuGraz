@@ -2,9 +2,11 @@ clear all
 close all
 clc
 format long
+diary('logOutput.txt')
+diary on
 tic
 
-max_iter = 5000;
+max_iter = 10;
 iter     = 1;
 threshold_value = 1e-9;
 
@@ -153,11 +155,16 @@ while iter <= max_iter
     delta_x_dach   =  pseudo_inverse * delta_l;
 
     %% Korrigierte Lösung
-    omega_corrected = f_omega(w_initial + delta_x_dach(1),...
+    w_initial_corrected = [w_initial(1) + delta_x_dach(1);
+                           w_initial(2) + delta_x_dach(2);
+                           w_initial(3) + delta_x_dach(3)];
+    omega_corrected = f_omega(w_initial_corrected,...
                               r_sun, r_moon,...
                               c_20, c_21, c_22, s_21, s_22, h,...
                               coefficient_T_g, coefficient_T_r, coefficient_F,...
-                              GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan);
+                              GM_sun, GM_moon, k_re + delta_x_dach(4),...
+                              k_im + delta_x_dach(5), A, B, C,...
+                              tr + delta_x_dach(6), timespan);
     
     %% Abbruchsbedingung 
     diff_corrected = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
@@ -196,6 +203,7 @@ xlabel('x[m]')
 axis equal
 
 toc
+diary off
 
 
 
