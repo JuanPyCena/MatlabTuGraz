@@ -4,10 +4,9 @@ clc
 format long
 tic
 
-max_iter = 500;
+max_iter = 5000;
 iter     = 1;
 threshold_value = 1e-9;
-h = waitbar(0,'Please wait...');
 
 G       = (6.674e-11) * 3600 * 3600;          % [m^3/(kg* h^2)]
 GM_sun  = (1.32712442076e20) * 3600 * 3600;   % [m^3/ h^2]
@@ -41,7 +40,8 @@ s_22 = grav_potent(5, :);
 w_initial = reference(:,1) .*3600;
 
 %% delta_X Vektor
-delta_x = [1e-8, 1e-8, 1e-8];
+%          w_initial_x, w_initial_y, w_initial_z, k_re, k_im, tr  
+delta_x = [1e-8,         1e-8,        1e-8,       1e-8, 1e-8, 1e-8];
 
 while iter <= max_iter
     disp(['Iteration: ', num2str(iter)]);
@@ -68,7 +68,25 @@ while iter <= max_iter
                             c_20, c_21, c_22, s_21, s_22, h,...
                             coefficient_T_g, coefficient_T_r, coefficient_F,...
                             GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan);
+    
+    omega_delta_k_re = f_omega(w_initial, ...
+                               r_sun, r_moon,...
+                               c_20, c_21, c_22, s_21, s_22, h,...
+                               coefficient_T_g, coefficient_T_r, coefficient_F,...
+                               GM_sun, GM_moon, k_re  + delta_x(4), k_im, A, B, C, tr, timespan);
 
+    omega_delta_k_im = f_omega(w_initial, ...
+                               r_sun, r_moon,...
+                               c_20, c_21, c_22, s_21, s_22, h,...
+                               coefficient_T_g, coefficient_T_r, coefficient_F,...
+                               GM_sun, GM_moon, k_re, k_im  + delta_x(5), A, B, C, tr, timespan);
+                         
+    omega_delta_k_tr = f_omega(w_initial, ...
+                               r_sun, r_moon,...
+                               c_20, c_21, c_22, s_21, s_22, h,...
+                               coefficient_T_g, coefficient_T_r, coefficient_F,...
+                               GM_sun, GM_moon, k_re, k_im, A, B, C, tr  * (1+ delta_x(6)), timespan);
+                         
     omega_0     = f_omega(w_initial,...
                           r_sun, r_moon,...
                           c_20, c_21, c_22, s_21, s_22, h,...
@@ -76,22 +94,33 @@ while iter <= max_iter
                           GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan);
 
     %% Prepare omega for matrix
-    omega_delta_mat   = [];
-    omega_delta_mat_x = [];
-    omega_delta_mat_y = [];
-    omega_delta_mat_z = [];
-    omega_0_mat       = [];
+    omega_delta_mat      = [];
+    omega_delta_mat_x    = [];
+    omega_delta_mat_y    = [];
+    omega_delta_mat_z    = [];
+    omega_delta_mat_k_re = [];
+    omega_delta_mat_k_im = [];
+    omega_delta_mat_tr   = [];
+    omega_0_mat          = [];
 
     % Create big column vector of stacked omega_delta vectors
     for i = 1:3:numel(omega_delta_x)
-        omega_delta_mat_x = [omega_delta_mat_x, omega_delta_x(i), omega_delta_x(i+1), omega_delta_x(i+2)];
-        omega_delta_mat_y = [omega_delta_mat_y, omega_delta_y(i), omega_delta_y(i+1), omega_delta_y(i+2)];
-        omega_delta_mat_z = [omega_delta_mat_z, omega_delta_z(i), omega_delta_z(i+1), omega_delta_z(i+2)];
+        omega_delta_mat_x    = [omega_delta_mat_x, omega_delta_x(i), omega_delta_x(i+1), omega_delta_x(i+2)];
+        omega_delta_mat_y    = [omega_delta_mat_y, omega_delta_y(i), omega_delta_y(i+1), omega_delta_y(i+2)];
+        omega_delta_mat_z    = [omega_delta_mat_z, omega_delta_z(i), omega_delta_z(i+1), omega_delta_z(i+2)];
+        omega_delta_mat_k_re = [omega_delta_mat_k_re, omega_delta_k_re(i), omega_delta_k_re(i+1), omega_delta_k_re(i+2)];
+        omega_delta_mat_k_im = [omega_delta_mat_k_im, omega_delta_k_im(i), omega_delta_k_im(i+1), omega_delta_k_im(i+2)];
+        omega_delta_mat_tr   = [omega_delta_mat_tr, omega_delta_k_tr(i), omega_delta_k_tr(i+1), omega_delta_k_tr(i+2)];
     end
-    omega_delta_mat_x = omega_delta_mat_x';
-    omega_delta_mat_y = omega_delta_mat_y';
-    omega_delta_mat_z = omega_delta_mat_z';
-    omega_delta_mat = [omega_delta_mat_x, omega_delta_mat_y, omega_delta_mat_z];
+    omega_delta_mat_x    = omega_delta_mat_x';
+    omega_delta_mat_y    = omega_delta_mat_y';
+    omega_delta_mat_z    = omega_delta_mat_z';
+    omega_delta_mat_k_re = omega_delta_mat_k_re';
+    omega_delta_mat_k_im = omega_delta_mat_k_im';
+    omega_delta_mat_tr   = omega_delta_mat_tr';
+    omega_delta_mat      = [omega_delta_mat_x, omega_delta_mat_y, ...
+                            omega_delta_mat_z, omega_delta_mat_k_re, ...
+                            omega_delta_mat_k_im, omega_delta_mat_tr];
 
     % Create big column vector of stacked omega_0 vectors
     for i = 1:3:numel(omega_0)
@@ -135,14 +164,13 @@ while iter <= max_iter
     diff_corrected_mat{iter} = diff_corrected;
     abbruch = abs(max(max(diff_corrected)));
     if (abbruch <= threshold_value)
-        disp(['Error smaller than: ', num2str(threshold_value)]);
+        disp(['Difference smaller than: ', num2str(threshold_value)]);
         break;
     end
     
     %% Delta_X Vektor überschreiben und iter erhoehen.
     delta_x = delta_x_dach;
     iter = iter + 1;
-    waitbar(iter / max_iter)
 end
 
 %% Plot
@@ -168,7 +196,6 @@ xlabel('x[m]')
 axis equal
 
 toc
-close(h)
 
 
 
