@@ -146,8 +146,11 @@ while iter <= max_iter
 end
 
 %% Plot
-xp        = (R/omega_N) .* omega_corrected(1,:);
-yp        = (R/omega_N) .* omega_corrected(2,:);
+xp           = (R/omega_N) .* omega_corrected(1,:);
+yp           = (R/omega_N) .* omega_corrected(2,:);
+
+xp_estimated = (R/omega_N) .* omega_0(1,:);
+yp_estimated = (R/omega_N) .* omega_0(2,:);
 
 xp_reference = (R/omega_N) .* reference(1,1:length(omega_corrected)).*3600;
 yp_reference = (R/omega_N) .* reference(2,1:length(omega_corrected)).*3600;
@@ -155,10 +158,11 @@ yp_reference = (R/omega_N) .* reference(2,1:length(omega_corrected)).*3600;
 figure(1)
 hold on
 plot(xp,yp)
+plot(xp_estimated, yp_estimated)
 plot(xp_reference,yp_reference)
 hold off
 title('Polar Motion at Earth Surface')
-legend('omega corrected', 'reference data')
+legend('omega corrected','estimated omega', 'reference data')
 ylabel('y[m]')
 xlabel('x[m]')
 axis equal
