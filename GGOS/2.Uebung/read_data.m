@@ -39,6 +39,8 @@ function [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(fi
     h(1,:) = (interp1(h_read(1,:),1:1/step:length(h_read)))';
     h(2,:) = (interp1(h_read(2,:),1:1/step:length(h_read)))';
     h(3,:) = (interp1(h_read(3,:),1:1/step:length(h_read)))';
+    
+    h(:,end+1) = h(:,end);
 
     % allocating the gravitational potential
     grav_potent(1,:) = DATA_gravPotential(1:timespan,2);
