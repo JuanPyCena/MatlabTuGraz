@@ -6,6 +6,7 @@ format long
 max_iter = 30;
 iter     = 1;
 threshold_value = 1e-9;
+h = waitbar(0,'Please wait...');
 
 G       = (6.674e-11) * 3600 * 3600;          % [m^3/(kg* h^2)]
 GM_sun  = (1.32712442076e20) * 3600 * 3600;   % [m^3/ h^2]
@@ -140,7 +141,9 @@ while iter <= max_iter
     %% Delta_X Vektor überschreiben und iter erhoehen.
     delta_x = delta_x_dach;
     iter = iter + 1;
+    waitbar(iter / max_iter)
 end
+close(h)
                       
 xp        = (R/omega_N) .* omega_corrected(1,:);
 yp        = (R/omega_N) .* omega_corrected(2,:);
