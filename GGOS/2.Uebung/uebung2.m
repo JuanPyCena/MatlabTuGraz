@@ -2,8 +2,9 @@ clear all
 close all
 clc
 format long
+tic
 
-max_iter = 30;
+max_iter = 500;
 iter     = 1;
 threshold_value = 1e-9;
 h = waitbar(0,'Please wait...');
@@ -143,8 +144,8 @@ while iter <= max_iter
     iter = iter + 1;
     waitbar(iter / max_iter)
 end
-close(h)
-                      
+
+%% Plot
 xp        = (R/omega_N) .* omega_corrected(1,:);
 yp        = (R/omega_N) .* omega_corrected(2,:);
 
@@ -162,6 +163,8 @@ ylabel('y[m]')
 xlabel('x[m]')
 axis equal
 
+toc
+close(h)
 
 
 
