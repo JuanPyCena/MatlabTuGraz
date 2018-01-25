@@ -6,7 +6,7 @@ diary('logOutput.txt')
 diary on
 tic
 
-max_iter = 10;
+max_iter = 30;
 iter     = 1;
 threshold_value = 1e-9;
 
@@ -201,6 +201,7 @@ legend('omega corrected','estimated omega', 'reference data')
 ylabel('y[m]')
 xlabel('x[m]')
 axis equal
+savefig('PolarPlot.fig')
 
 toc
 diary off
