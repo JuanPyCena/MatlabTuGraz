@@ -1,4 +1,4 @@
-function omega = f_omega(initial, r_sun, r_moon,c_20, c_21, c_22, s_21, s_22, h, coefficient_T_g, coefficient_T_r, coefficient_F, GM_sun, GM_moon,  k_re, k_im, A, B, C, tr, timespan)
+function omega = f_omega(initial, r_sun, r_moon,c_20, c_21, c_22, s_21, s_22, h, coefficient_T_g, coefficient_T_r, coefficient_F, GM_sun, GM_moon,  k_re, k_im, A, B, C, tr, timespan, numOfDays)
 
     dist_sun   = sqrt(r_sun(1,:).^2 + r_sun(2,:).^2 + r_sun(3,:).^2);
     dist_moon  = sqrt(r_moon(1,:).^2 + r_moon(2,:).^2 + r_moon(3,:).^2);
@@ -44,7 +44,7 @@ function omega = f_omega(initial, r_sun, r_moon,c_20, c_21, c_22, s_21, s_22, h,
     dt = 1;
     counter = 1;
     w = initial;
-    for t = 1:dt:24*365
+    for t = 1:dt:24*numOfDays
 
         w_x = w(1);
         w_y = w(2);
