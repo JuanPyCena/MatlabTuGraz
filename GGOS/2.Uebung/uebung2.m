@@ -223,6 +223,45 @@ savefig('PolarPlot.fig')
 toc
 diary off
 
+%% Berechnung mit kalibrierten Daten
+
+numOfDays = 1095;
+% Neu einlesen
+[timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(AAM_FILE, 4,8);
+c_20 = grav_potent(1, :);
+c_21 = grav_potent(2, :);
+s_21 = grav_potent(3, :);
+c_22 = grav_potent(4, :);
+s_22 = grav_potent(5, :);
+
+w_initial = [x_vec(1); x_vec(2); x_vec(3)];
+k_re      = [x_vec(4)];
+k_im      = [x_vec(5)];
+tr        = [x_vec(6)];
+
+omega_calibrated    = f_omega(w_initial,...
+                              r_sun, r_moon,...
+                              c_20, c_21, c_22, s_21, s_22, h,...
+                              coefficient_T_g, coefficient_T_r, coefficient_F,...
+                              GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
+
+xp           = (R/omega_N) .* omega_calibrated(1,:);
+yp           = (R/omega_N) .* omega_calibrated(2,:);
+
+xp_reference = (R/omega_N) .* reference(1,1:length(omega_calibrated)).*3600;
+yp_reference = (R/omega_N) .* reference(2,1:length(omega_calibrated)).*3600;
+
+figure(1)
+hold on
+plot(xp,yp)
+plot(xp_reference,yp_reference)
+hold off
+title('Polar Motion at Earth Surface')
+legend('omega corrected', 'reference data')
+ylabel('y[m]')
+xlabel('x[m]')
+axis equal
+savefig('CalibratedPolarPlot.fig')
 
 
 
