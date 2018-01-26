@@ -6,7 +6,7 @@ diary('logOutput.txt')
 diary on
 tic
 
-max_iter = 3;
+max_iter = 2;
 iter     = 1;
 threshold_value = 1e-9;
 
@@ -44,9 +44,16 @@ w_initial = reference(:,1) .*3600;
 %% delta_X Vektor
 %          w_initial_x,  w_initial_y,  w_initial_z,  k_re, k_im, tr  
 delta_x = [1e-8,         1e-8,           1e-8,       1e-8, 1e-8, 1e-8];
+x_vec   = [w_initial(1), w_initial(2), w_initial(3), k_re, k_im, tr]';
 
 while iter <= max_iter
     disp(['Iteration: ', num2str(iter)]);
+    
+    %% X_vektor assignen
+    w_initial = [x_vec(1); x_vec(2); x_vec(3)];
+    k_re      = [x_vec(4)];
+    k_im      = [x_vec(5)];
+    tr        = [x_vec(6)];
     
     %% F(x)
     w_initial_x = [w_initial(1) + delta_x(1); w_initial(2);              w_initial(3)];
@@ -114,6 +121,7 @@ while iter <= max_iter
         omega_delta_mat_k_im = [omega_delta_mat_k_im, omega_delta_k_im(i), omega_delta_k_im(i+1), omega_delta_k_im(i+2)];
         omega_delta_mat_tr   = [omega_delta_mat_tr, omega_delta_k_tr(i), omega_delta_k_tr(i+1), omega_delta_k_tr(i+2)];
     end
+    
     omega_delta_mat_x    = omega_delta_mat_x';
     omega_delta_mat_y    = omega_delta_mat_y';
     omega_delta_mat_z    = omega_delta_mat_z';
@@ -158,13 +166,19 @@ while iter <= max_iter
     w_initial_corrected = [w_initial(1) + delta_x_dach(1);
                            w_initial(2) + delta_x_dach(2);
                            w_initial(3) + delta_x_dach(3)];
+                       
     omega_corrected = f_omega(w_initial_corrected,...
                               r_sun, r_moon,...
                               c_20, c_21, c_22, s_21, s_22, h,...
                               coefficient_T_g, coefficient_T_r, coefficient_F,...
-                              GM_sun, GM_moon, k_re + delta_x_dach(4),...
-                              k_im + delta_x_dach(5), A, B, C,...
-                              tr + delta_x_dach(6), timespan);             
+                              GM_sun, GM_moon, ...
+                              k_re + delta_x_dach(4),...
+                              k_im + delta_x_dach(5),...
+                              A, B, C,...
+                              tr  * (1+ delta_x(6)),...
+                              timespan);    
+                          
+    x_dach = x_vec + delta_x_dach;                      
     
     %% Abbruchsbedingung 
     diff_corrected = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
@@ -177,6 +191,7 @@ while iter <= max_iter
     
     %% Delta_X Vektor überschreiben, x_dach überschreiben und iter erhoehen.
     delta_x = delta_x_dach;
+    x_vec   = x_dach;
     iter    = iter + 1;
 end
 
@@ -193,11 +208,11 @@ yp_reference = (R/omega_N) .* reference(2,1:length(omega_corrected)).*3600;
 figure(1)
 hold on
 plot(xp,yp)
-plot(xp_estimated, yp_estimated)
+%plot(xp_estimated, yp_estimated)
 plot(xp_reference,yp_reference)
 hold off
 title('Polar Motion at Earth Surface')
-legend('omega corrected','estimated omega', 'reference data')
+legend('omega corrected', 'reference data')
 ylabel('y[m]')
 xlabel('x[m]')
 axis equal
