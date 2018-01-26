@@ -7,9 +7,9 @@ diary on
 tic
 
 year_begin         = 4;
-year_end           = 6;
+year_end           = 7;
 numOfDays          = 365 * (year_end - year_begin);
-max_iter           = 1; %420;
+max_iter           = 420;
 threshold_value    = 1e-8;
 threshold_relative = 1e-13;
 
@@ -280,12 +280,12 @@ for variation = 1:numel(variations_in_calculation)
 
         
 
-        x_dach = x_vec + delta_x_dach                      
+        x_dach = x_vec + delta_x_dach;                
 
         %% Abbruchsbedingung 
         diff_corrected           = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
         diff_corrected_mat{iter} = diff_corrected;
-        abbruch                  = abs(max(max(diff_corrected)))
+        abbruch                  = abs(max(max(diff_corrected)));
         abbruch_m                = [abbruch_m, abbruch];
 
         if ((abbruch <= threshold_value))        
@@ -350,7 +350,7 @@ end
 toc
 diary off
 
-%% Read in Data as rad/s for Plot
+%% Read in Data as rad/h for Plot
 omega_N = (7.2921151467064e-5) .* 3600;        % [rad/h]
 R       = 6378136.6;                           % [m]
 
@@ -363,7 +363,7 @@ reference_data(1,:) = DATA_reference(1:length(result_omega),2)' .* 3600;
 reference_data(2,:) = DATA_reference(1:length(result_omega),3)' .* 3600;
 reference_data(3,:) = DATA_reference(1:length(result_omega),4)' .* 3600;
 
-%% Plotting all relevant Data
+%% Preparing all relevant data for plotting
 
 xp_omega     = (R/omega_N) .* result_omega(1,:);
 yp_omega     = (R/omega_N) .* result_omega(2,:);
@@ -375,6 +375,21 @@ yp_trace     = (R/omega_N) .* result_trace(2,:);
 xp_reference = (R/omega_N) .* reference_data(1,:);
 yp_reference = (R/omega_N) .* reference_data(2,:);
 
+delta_LOD_omega = 86400/omega_N .* (omega_N - result_omega(3,:)./3600);
+delta_LOD_love  = 86400/omega_N .* (omega_N - result_love(3,:)./3600);
+delta_LOD_trace = 86400/omega_N .* (omega_N - result_trace(3,:)./3600);
+delta_LOD_ref   = 86400/omega_N .* (omega_N - reference_data(3,:)./3600);
+
+LOD_omega = 8.6376e+04 - delta_LOD_omega;
+LOD_love  = 8.6376e+04 - delta_LOD_love;
+LOD_trace = 8.6376e+04 - delta_LOD_trace;
+LOD_ref   = 8.6376e+04 - delta_LOD_ref;
+LOD_omega = LOD_omega .* 1000;
+LOD_love  = LOD_love .* 1000;
+LOD_trace = LOD_trace .* 1000;
+LOD_ref   = LOD_ref .* 1000;
+
+%% Plotting
 figure(1)
 hold on
 plot(xp_omega,yp_omega, 'LineWidth',0.1)
@@ -388,5 +403,47 @@ ylabel('y[m]')
 xlabel('x[m]')
 axis equal
 savefig('CalibratedPolarPlot.fig')
+
+figure(2)
+subplot(3,1,1)
+hold on
+plot(result_omega(1,:)./3600)
+plot(result_love(1,:)./3600)
+plot(result_trace(1,:)./3600)
+hold off
+title('Angular velocity - w_x')
+ylabel('w_x [rad/s]')
+xlabel('Time [h]')
+subplot(3,1,2)
+hold on
+plot(result_omega(2,:)./3600)
+plot(result_love(2,:)./3600)
+plot(result_trace(2,:)./3600)
+hold off
+title('Angular velocity - w_y')
+ylabel('w_y [rad/s]')
+xlabel('Time [h]')
+subplot(3,1,3)
+hold on
+plot(result_omega(3,:)./3600)
+plot(result_love(3,:)./3600)
+plot(result_trace(3,:)./3600)
+hold off
+title('Angular velocity - w_z')
+ylabel('w_z [rad/s]')
+xlabel('Time [h]')
+
+figure(3)
+hold on
+plot(LOD_omega)
+plot(LOD_love)
+plot(LOD_trace)
+plot(LOD_ref)
+hold off
+legend('Only \omega_0', '\omega_0 and Love Numbers', '\omega_0, Love Numbers and trace' ,'reference data')
+title('Delta Length of day')
+ylabel('Length of Day [ms]')
+xlabel('Time [h]')
+
 
 
