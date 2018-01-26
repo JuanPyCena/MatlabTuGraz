@@ -234,6 +234,11 @@ for variation = 1:numel(variations_in_calculation)
         %% Schätzung der Loesung
         pseudo_inverse = (A_mat' * A_mat) \ A_mat';
         delta_x_dach   =  pseudo_inverse * delta_l;
+        
+        if any(isnan(delta_x_dach))
+            disp('An Element of delta_x_dach is NAN! Exiting before anything bad happens');
+            break;
+        end
 
         %% Korrigierte Lösung
         w_initial_corrected = [w_initial(1) + delta_x_dach(1);
@@ -277,9 +282,7 @@ for variation = 1:numel(variations_in_calculation)
                                   tr  + delta_x(6),...
                                   timespan, numOfDays);    
         end
-
         
-
         x_dach = x_vec + delta_x_dach;                
 
         %% Abbruchsbedingung 
