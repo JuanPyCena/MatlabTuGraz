@@ -1,19 +1,34 @@
-function [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(fileName_motionMomentum)
+function [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(fileName_beginning, year_start, year_end)
 % This function reads in a series of given files and then returns the
 % timespan, motion terms of the angular momentum, gravitational potential,
 % and the positions of the moon and sun. 
 
     % General constants
-    omega_N = (7.2921151467064e-5);% * 3600;        % [rad/s]
+    omega_N = (7.2921151467064e-5) * 3600;        % [rad/s]
     Mass    = 5.9737e24;                          % [kg]
     R       = 6378136.6;                          % [m]
     A       = 0.3296108 * Mass * R * R;           % [kg * m^2]
     C       = 0.3307007 * Mass * R * R;           % [kg * m^2]
 
     % importing the data
-    delimiterIn = ' ';
+    delimiterIn    = ' ';
+    file_format    = '.asc';
+    file_numbering = '';
+    file_ending    = '';
     
-    DATA_motionMomentum = importdata(fileName_motionMomentum, delimiterIn);
+    DATA_motionMomentum = [];
+    for i = year_start:year_end
+        if i < 10
+            file_numbering = strcat('0', num2str(i));
+        else
+            file_numbering = num2str(i);
+        end
+        file_ending             = strcat(file_numbering, file_format);
+        fileName_motionMomentum = strcat(fileName_beginning, file_ending);
+        motion_data             = importdata(fileName_motionMomentum, delimiterIn);
+        DATA_motionMomentum     = [DATA_motionMomentum; motion_data(:,9:11)]; 
+    end
+    
     DATA_gravPotential  = importdata('potentialCoefficientsAOHIS.txt', delimiterIn);
     DATA_moon           = importdata('moon.txt', delimiterIn);
     DATA_sun            = importdata('sun.txt', delimiterIn);
@@ -32,9 +47,9 @@ function [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(fi
     end
     
     % allocating the motionMomentum
-    h_read(1,:) = DATA_motionMomentum(:,9)  .* (omega_N * (C - A) / (1.610));
-    h_read(2,:) = DATA_motionMomentum(:,10) .* (omega_N * (C - A) / (1.610));
-    h_read(3,:) = DATA_motionMomentum(:,11) .* (omega_N *  C / (1.125));
+    h_read(1,:) = DATA_motionMomentum(:,1) .* (omega_N * (C - A) / (1.610));
+    h_read(2,:) = DATA_motionMomentum(:,2) .* (omega_N * (C - A) / (1.610));
+    h_read(3,:) = DATA_motionMomentum(:,3) .* (omega_N *  C / (1.125));
     
     h(1,:) = (interp1(h_read(1,:),1:1/step:length(h_read)))';
     h(2,:) = (interp1(h_read(2,:),1:1/step:length(h_read)))';
