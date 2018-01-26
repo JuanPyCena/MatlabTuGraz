@@ -6,13 +6,22 @@ diary('logOutput.txt')
 diary on
 tic
 
-numOfDays = 730;
-max_iter  = 2;
-iter      = 1;
-threshold_value = 1e-8;
-threshold_relative = 1e-12;
-abbruch_m = [];
+year_begin         = 4;
+year_end           = 6;
+numOfDays          = 365 * (year_end - year_begin);
+max_iter           = 1; %420;
+threshold_value    = 1e-8;
+threshold_relative = 1e-13;
 
+variations_in_calculation = ["Only_omega0_is_altered"
+                             "Omega0_and_the_love_numbers_are_altered" 
+                             "Omega0_and_the_love_numbers_and_the_trace_are_altered"];
+                         
+fileNames = ["onlyOmega.txt"
+             "omegaAndLove.txt"
+             "omegaLoveAndtrace.txt"];
+
+%% General Values
 G       = (6.674e-11) * 3600 * 3600;          % [m^3/(kg* h^2)]
 GM_sun  = (1.32712442076e20) * 3600 * 3600;   % [m^3/ h^2]
 GM_moon = (4.9027779e12) * 3600 * 3600 ;      % [m^3/ h^2]
@@ -30,256 +39,354 @@ coefficient_T_g = sqrt(5/3) * Mass * R * R;
 coefficient_T_r = (omega_N * R^5) / (3 * G);
 coefficient_F   = (omega_N * omega_N * R^5) / (3 * G);
 
-%% Einlesen
-AAM_FILE = 'ESMGFZ_AAM_v1.0_03h_20';
-HAM_FILE = 'ESMGFZ_HAM_v1.2_24h_20';
-OAM_FILE = 'ESMGFZ_OAM_v1.0_03h_20';
+%% Calibrating and calculating all omegas
+for variation = 1:numel(variations_in_calculation)
+    abbruch_m          = [];
+    abbruch_rel_m      = [];
+    iter               = 1;
 
-[timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(AAM_FILE, 4,6);
-c_20 = grav_potent(1, :);
-c_21 = grav_potent(2, :);
-s_21 = grav_potent(3, :);
-c_22 = grav_potent(4, :);
-s_22 = grav_potent(5, :);
+    %% Einlesen
+    AAM_FILE = 'ESMGFZ_AAM_v1.0_03h_20';
 
-w_initial = reference(:,1) .*3600;
+    [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(AAM_FILE, year_begin, year_end);
+    c_20 = grav_potent(1, :);
+    c_21 = grav_potent(2, :);
+    s_21 = grav_potent(3, :);
+    c_22 = grav_potent(4, :);
+    s_22 = grav_potent(5, :);
 
-%% delta_X Vektor
-%          w_initial_x,  w_initial_y,  w_initial_z,  k_re, k_im, tr  
-delta_val = 1;
-delta_x   = [delta_val,       delta_val,    delta_val, delta_val, delta_val, 1e38];
-x_vec     = [w_initial(1), w_initial(2), w_initial(3), k_re     , k_im     , tr]';
+    w_initial = reference(:,1) .*3600;
 
-while iter <= max_iter
-    disp(['Iteration: ', num2str(iter)]);
+    %% delta_X Vektor
+    %          w_initial_x,  w_initial_y,  w_initial_z,  k_re, k_im, tr  
+    delta_val = 1;
     
-    %% X_vektor assignen
-    w_initial = [x_vec(1); x_vec(2); x_vec(3)];
-    k_re      = [x_vec(4)];
-    k_im      = [x_vec(5)];
-    tr        = [x_vec(6)];
-    
-    %% F(x)
-    w_initial_x = [w_initial(1) + delta_x(1); w_initial(2);              w_initial(3)];
-    w_initial_y = [w_initial(1);              w_initial(2) + delta_x(2); w_initial(3)];
-    w_initial_z = [w_initial(1);              w_initial(2);              w_initial(3) + delta_x(3)];
-
-    omega_delta_x = f_omega(w_initial_x, ...
-                            r_sun, r_moon,...
-                            c_20, c_21, c_22, s_21, s_22, h,...
-                            coefficient_T_g, coefficient_T_r, coefficient_F,...
-                            GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
-
-    omega_delta_y = f_omega(w_initial_y, ...
-                            r_sun, r_moon,...
-                            c_20, c_21, c_22, s_21, s_22, h,...
-                            coefficient_T_g, coefficient_T_r, coefficient_F,...
-                            GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
-
-    omega_delta_z = f_omega(w_initial_z , ...
-                            r_sun, r_moon,...
-                            c_20, c_21, c_22, s_21, s_22, h,...
-                            coefficient_T_g, coefficient_T_r, coefficient_F,...
-                            GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
-    
-    omega_delta_k_re = f_omega(w_initial, ...
-                               r_sun, r_moon,...
-                               c_20, c_21, c_22, s_21, s_22, h,...
-                               coefficient_T_g, coefficient_T_r, coefficient_F,...
-                               GM_sun, GM_moon, k_re  + delta_x(4), k_im, A, B, C, tr, timespan, numOfDays);
-
-    omega_delta_k_im = f_omega(w_initial, ...
-                               r_sun, r_moon,...
-                               c_20, c_21, c_22, s_21, s_22, h,...
-                               coefficient_T_g, coefficient_T_r, coefficient_F,...
-                               GM_sun, GM_moon, k_re, k_im  + delta_x(5), A, B, C, tr, timespan, numOfDays);
-                         
-    omega_delta_k_tr = f_omega(w_initial, ...
-                               r_sun, r_moon,...
-                               c_20, c_21, c_22, s_21, s_22, h,...
-                               coefficient_T_g, coefficient_T_r, coefficient_F,...
-                               GM_sun, GM_moon, k_re, k_im, A, B, C, tr + delta_x(6), timespan, numOfDays);
-                         
-    omega_0     = f_omega(w_initial,...
-                          r_sun, r_moon,...
-                          c_20, c_21, c_22, s_21, s_22, h,...
-                          coefficient_T_g, coefficient_T_r, coefficient_F,...
-                          GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
-
-    %% Prepare omega for matrix
-    omega_delta_mat      = [];
-    omega_delta_mat_x    = [];
-    omega_delta_mat_y    = [];
-    omega_delta_mat_z    = [];
-    omega_delta_mat_k_re = [];
-    omega_delta_mat_k_im = [];
-    omega_delta_mat_tr   = [];
-    omega_0_mat          = [];
-
-    % Create big column vector of stacked omega_delta vectors
-    for i = 1:3:numel(omega_delta_x)
-        omega_delta_mat_x    = [omega_delta_mat_x, omega_delta_x(i), omega_delta_x(i+1), omega_delta_x(i+2)];
-        omega_delta_mat_y    = [omega_delta_mat_y, omega_delta_y(i), omega_delta_y(i+1), omega_delta_y(i+2)];
-        omega_delta_mat_z    = [omega_delta_mat_z, omega_delta_z(i), omega_delta_z(i+1), omega_delta_z(i+2)];
-        omega_delta_mat_k_re = [omega_delta_mat_k_re, omega_delta_k_re(i), omega_delta_k_re(i+1), omega_delta_k_re(i+2)];
-        omega_delta_mat_k_im = [omega_delta_mat_k_im, omega_delta_k_im(i), omega_delta_k_im(i+1), omega_delta_k_im(i+2)];
-        omega_delta_mat_tr   = [omega_delta_mat_tr, omega_delta_k_tr(i), omega_delta_k_tr(i+1), omega_delta_k_tr(i+2)];
-    end
-    
-    omega_delta_mat_x    = omega_delta_mat_x';
-    omega_delta_mat_y    = omega_delta_mat_y';
-    omega_delta_mat_z    = omega_delta_mat_z';
-    omega_delta_mat_k_re = omega_delta_mat_k_re';
-    omega_delta_mat_k_im = omega_delta_mat_k_im';
-    omega_delta_mat_tr   = omega_delta_mat_tr';
-    omega_delta_mat      = [omega_delta_mat_x, omega_delta_mat_y, ...
-                            omega_delta_mat_z, omega_delta_mat_k_re, ...
-                            omega_delta_mat_k_im, omega_delta_mat_tr];
-
-    % Create big column vector of stacked omega_0 vectors
-    for i = 1:3:numel(omega_0)
-        omega_0_mat = [omega_0_mat, omega_0(i), omega_0(i+1), omega_0(i+2)];
-    end
-    omega_0_mat = omega_0_mat';
-
-    %% A_mat
-    A_mat = zeros(length(omega_delta_mat), numel(delta_x));
-
-    % Amatrix(:,i) = (f(x0 + dx) - f(x0) / dx) 
-    for i = 1:numel(delta_x)
-       A_mat(:,i) = (omega_delta_mat(:,i) - omega_0_mat) ./ delta_x(i); 
+    % Only omega0 is altered
+    if variation == 1
+        delta_x   = [delta_val,       delta_val,    delta_val];
+        x_vec     = [w_initial(1), w_initial(2), w_initial(3)]'; 
+    % Omega0 and the love numbers are altered    
+    elseif variation == 2
+        delta_x   = [delta_val,       delta_val,    delta_val, delta_val, delta_val];
+        x_vec     = [w_initial(1), w_initial(2), w_initial(3), k_re     , k_im]';
+    % Omega0, the love numbers and the trace are altered    
+    elseif variation == 3        
+        delta_x   = [delta_val,       delta_val,    delta_val, delta_val, delta_val, 1e38];
+        x_vec     = [w_initial(1), w_initial(2), w_initial(3), k_re     , k_im     , tr]';
     end
 
-    %% Reduzierte Beobachtungen
-    l = [];
-    % Bring the reference Data into a big column vector like omega_0
-    for i = 1:3:numel(omega_delta_x)
-        l = [l, reference(i) .*3600,  reference(i+1) .*3600, reference(i+2) .*3600];
-    end
-    l = l';
+    %% Iterieren
+    while iter <= max_iter
+        disp(['Iteration: ', num2str(iter)]);
 
-    l_0 = omega_0_mat;
+        %% X_vektor assignen
+        w_initial = [x_vec(1); x_vec(2); x_vec(3)];
+        
+        % Omega0 and the love numbers are altered    
+        if variation >= 2
+            k_re      = [x_vec(4)];
+            k_im      = [x_vec(5)];
+        end
+        
+        % Omega0, the love numbers and the trace are altered   
+        if variation == 3
+            tr        = [x_vec(6)];
+        end
 
-    delta_l = l - l_0;
+        %% F(x)
+        w_initial_x = [w_initial(1) + delta_x(1); w_initial(2);              w_initial(3)];
+        w_initial_y = [w_initial(1);              w_initial(2) + delta_x(2); w_initial(3)];
+        w_initial_z = [w_initial(1);              w_initial(2);              w_initial(3) + delta_x(3)];
 
-    %% Schätzung der Loesung
-    pseudo_inverse = (A_mat' * A_mat) \ A_mat';
-    delta_x_dach   =  pseudo_inverse * delta_l;
+        omega_delta_x = f_omega(w_initial_x, ...
+                                r_sun, r_moon,...
+                                c_20, c_21, c_22, s_21, s_22, h,...
+                                coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
 
-    %% Korrigierte Lösung
-    w_initial_corrected = [w_initial(1) + delta_x_dach(1);
-                           w_initial(2) + delta_x_dach(2);
-                           w_initial(3) + delta_x_dach(3)];
-                       
-    omega_corrected = f_omega(w_initial_corrected,...
-                              r_sun, r_moon,...
-                              c_20, c_21, c_22, s_21, s_22, h,...
-                              coefficient_T_g, coefficient_T_r, coefficient_F,...
-                              GM_sun, GM_moon, ...
-                              k_re + delta_x_dach(4),...
-                              k_im + delta_x_dach(5),...
-                              A, B, C,...
-                              tr  + delta_x(6),...
-                              timespan, numOfDays);    
-                          
-    x_dach = x_vec + delta_x_dach                      
-    
-    %% Abbruchsbedingung 
-    diff_corrected           = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
-    diff_corrected_mat{iter} = diff_corrected;
-    abbruch                  = abs(max(max(diff_corrected)))
-    abbruch_m                = [abbruch_m, abbruch];
-    
-    if ((abbruch <= threshold_value))        
-        disp(['Difference smaller than: ', num2str(threshold_relative)]);
-        break;
-    end
-    
-    if (iter > 1 && (abs(abbruch_m(iter) - abbruch_m(iter-1)) <= threshold_relative))
-        disp(['Difference between difference smaller than: ', num2str(threshold_relative)]);
-        break;
-    end
-    
-    %% Delta_X Vektor überschreiben, x_dach überschreiben und iter erhoehen.
-    delta_x = delta_x_dach;
-    x_vec   = x_dach;
-    iter    = iter + 1;
-end
+        omega_delta_y = f_omega(w_initial_y, ...
+                                r_sun, r_moon,...
+                                c_20, c_21, c_22, s_21, s_22, h,...
+                                coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
+        
+        omega_delta_z = f_omega(w_initial_z , ...
+                                r_sun, r_moon,...
+                                c_20, c_21, c_22, s_21, s_22, h,...
+                                coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
 
-%% Plot
-xp           = (R/omega_N) .* omega_corrected(1,:);
-yp           = (R/omega_N) .* omega_corrected(2,:);
+        % Omega0 and the love numbers are altered    
+        if variation >= 2
+            omega_delta_k_re = f_omega(w_initial, ...
+                                       r_sun, r_moon,...
+                                       c_20, c_21, c_22, s_21, s_22, h,...
+                                       coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                       GM_sun, GM_moon, k_re  + delta_x(4), k_im, A, B, C, tr, timespan, numOfDays);
 
-xp_estimated = (R/omega_N) .* omega_0(1,:);
-yp_estimated = (R/omega_N) .* omega_0(2,:);
-
-xp_reference = (R/omega_N) .* reference(1,1:length(omega_corrected)).*3600;
-yp_reference = (R/omega_N) .* reference(2,1:length(omega_corrected)).*3600;
-
-figure(1)
-hold on
-plot(xp,yp)
-%plot(xp_estimated, yp_estimated)
-plot(xp_reference,yp_reference)
-hold off
-title('Polar Motion at Earth Surface')
-legend('omega corrected', 'reference data')
-ylabel('y[m]')
-xlabel('x[m]')
-axis equal
-savefig('PolarPlot.fig')
-
-toc
-diary off
-
-%% Berechnung mit kalibrierten Daten
-
-numOfDays = 1095;
-% Neu einlesen
-[timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(AAM_FILE, 4,8);
-c_20 = grav_potent(1, :);
-c_21 = grav_potent(2, :);
-s_21 = grav_potent(3, :);
-c_22 = grav_potent(4, :);
-s_22 = grav_potent(5, :);
-
-w_initial = [x_vec(1); x_vec(2); x_vec(3)];
-k_re      = [x_vec(4)];
-k_im      = [x_vec(5)];
-tr        = [x_vec(6)];
-
-omega_calibrated    = f_omega(w_initial,...
+            omega_delta_k_im = f_omega(w_initial, ...
+                                       r_sun, r_moon,...
+                                       c_20, c_21, c_22, s_21, s_22, h,...
+                                       coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                       GM_sun, GM_moon, k_re, k_im  + delta_x(5), A, B, C, tr, timespan, numOfDays);
+        end
+        
+        % Omega0, the love numbers and the trace are altered
+        if variation == 3
+            omega_delta_k_tr = f_omega(w_initial, ...
+                                       r_sun, r_moon,...
+                                       c_20, c_21, c_22, s_21, s_22, h,...
+                                       coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                       GM_sun, GM_moon, k_re, k_im, A, B, C, tr + delta_x(6), timespan, numOfDays);
+        end
+        
+        omega_0     = f_omega(w_initial,...
                               r_sun, r_moon,...
                               c_20, c_21, c_22, s_21, s_22, h,...
                               coefficient_T_g, coefficient_T_r, coefficient_F,...
                               GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
 
-xp           = (R/omega_N) .* omega_calibrated(1,:);
-yp           = (R/omega_N) .* omega_calibrated(2,:);
+        %% Prepare omega for matrix
+        omega_delta_mat      = [];
+        omega_delta_mat_x    = [];
+        omega_delta_mat_y    = [];
+        omega_delta_mat_z    = [];
+        omega_delta_mat_k_re = [];
+        omega_delta_mat_k_im = [];
+        omega_delta_mat_tr   = [];
+        omega_0_mat          = [];
 
-xp_reference = (R/omega_N) .* reference(1,1:length(omega_calibrated)).*3600;
-yp_reference = (R/omega_N) .* reference(2,1:length(omega_calibrated)).*3600;
+        % Create big column vector of stacked omega_delta vectors
+        for i = 1:3:numel(omega_delta_x)
+            omega_delta_mat_x    = [omega_delta_mat_x, omega_delta_x(i), omega_delta_x(i+1), omega_delta_x(i+2)];
+            omega_delta_mat_y    = [omega_delta_mat_y, omega_delta_y(i), omega_delta_y(i+1), omega_delta_y(i+2)];
+            omega_delta_mat_z    = [omega_delta_mat_z, omega_delta_z(i), omega_delta_z(i+1), omega_delta_z(i+2)];
+            
+            % Omega0 and the love numbers are altered    
+            if variation >= 2
+                omega_delta_mat_k_re = [omega_delta_mat_k_re, omega_delta_k_re(i), omega_delta_k_re(i+1), omega_delta_k_re(i+2)];
+                omega_delta_mat_k_im = [omega_delta_mat_k_im, omega_delta_k_im(i), omega_delta_k_im(i+1), omega_delta_k_im(i+2)];
+            end
+            
+            % Omega0, the love numbers and the trace are altered
+            if variation == 3
+                omega_delta_mat_tr   = [omega_delta_mat_tr, omega_delta_k_tr(i), omega_delta_k_tr(i+1), omega_delta_k_tr(i+2)];
+            end
+        end
 
-figure(2)
+        omega_delta_mat_x    = omega_delta_mat_x';
+        omega_delta_mat_y    = omega_delta_mat_y';
+        omega_delta_mat_z    = omega_delta_mat_z';
+        omega_delta_mat_k_re = omega_delta_mat_k_re';
+        omega_delta_mat_k_im = omega_delta_mat_k_im';
+        omega_delta_mat_tr   = omega_delta_mat_tr';
+        
+        % Only omega0 is altered
+        if variation == 1
+            omega_delta_mat  = [omega_delta_mat_x, ...
+                                omega_delta_mat_y, ...
+                                omega_delta_mat_z];
+                            
+        % Omega0 and the love numbers are altered    
+        elseif variation == 2
+            omega_delta_mat  = [omega_delta_mat_x, ...
+                                omega_delta_mat_y, ...
+                                omega_delta_mat_z, ...
+                                omega_delta_mat_k_re, ...
+                                omega_delta_mat_k_im];
+                            
+        % Omega0, the love numbers and the trace are altered    
+        elseif variation == 3        
+            omega_delta_mat  = [omega_delta_mat_x, ...
+                                omega_delta_mat_y, ...
+                                omega_delta_mat_z, ...
+                                omega_delta_mat_k_re, ...
+                                omega_delta_mat_k_im, ...
+                                omega_delta_mat_tr];
+        end
+
+        % Create big column vector of stacked omega_0 vectors
+        for i = 1:3:numel(omega_0)
+            omega_0_mat = [omega_0_mat, omega_0(i), omega_0(i+1), omega_0(i+2)];
+        end
+        omega_0_mat = omega_0_mat';
+
+        %% A_mat
+        A_mat = zeros(length(omega_delta_mat), numel(delta_x));
+
+        % Amatrix(:,i) = (f(x0 + dx) - f(x0) / dx) 
+        for i = 1:numel(delta_x)
+           A_mat(:,i) = (omega_delta_mat(:,i) - omega_0_mat) ./ delta_x(i); 
+        end
+
+        %% Reduzierte Beobachtungen
+        l = [];
+        % Bring the reference Data into a big column vector like omega_0
+        for i = 1:3:numel(omega_delta_x)
+            l = [l, reference(i) .*3600,  reference(i+1) .*3600, reference(i+2) .*3600];
+        end
+        l = l';
+
+        l_0 = omega_0_mat;
+
+        delta_l = l - l_0;
+
+        %% Schätzung der Loesung
+        pseudo_inverse = (A_mat' * A_mat) \ A_mat';
+        delta_x_dach   =  pseudo_inverse * delta_l;
+
+        %% Korrigierte Lösung
+        w_initial_corrected = [w_initial(1) + delta_x_dach(1);
+                               w_initial(2) + delta_x_dach(2);
+                               w_initial(3) + delta_x_dach(3)];
+                           
+        % Only omega0 is altered            
+        if variation == 1
+                omega_corrected = f_omega(w_initial_corrected,...
+                                  r_sun, r_moon,...
+                                  c_20, c_21, c_22, s_21, s_22, h,...
+                                  coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                  GM_sun, GM_moon, ...
+                                  k_re,...
+                                  k_im,...
+                                  A, B, C,...
+                                  tr,...
+                                  timespan, numOfDays);  
+        % Omega0 and the love numbers are altered    
+        elseif variation == 2
+                omega_corrected = f_omega(w_initial_corrected,...
+                                  r_sun, r_moon,...
+                                  c_20, c_21, c_22, s_21, s_22, h,...
+                                  coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                  GM_sun, GM_moon, ...
+                                  k_re + delta_x_dach(4),...
+                                  k_im + delta_x_dach(5),...
+                                  A, B, C,...
+                                  tr ,...
+                                  timespan, numOfDays);  
+        % Omega0, the love numbers and the trace are altered    
+        elseif variation == 3        
+                omega_corrected = f_omega(w_initial_corrected,...
+                                  r_sun, r_moon,...
+                                  c_20, c_21, c_22, s_21, s_22, h,...
+                                  coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                  GM_sun, GM_moon, ...
+                                  k_re + delta_x_dach(4),...
+                                  k_im + delta_x_dach(5),...
+                                  A, B, C,...
+                                  tr  + delta_x(6),...
+                                  timespan, numOfDays);    
+        end
+
+        
+
+        x_dach = x_vec + delta_x_dach                      
+
+        %% Abbruchsbedingung 
+        diff_corrected           = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
+        diff_corrected_mat{iter} = diff_corrected;
+        abbruch                  = abs(max(max(diff_corrected)))
+        abbruch_m                = [abbruch_m, abbruch];
+
+        if ((abbruch <= threshold_value))        
+            disp(['Difference smaller than: ', num2str(threshold_relative)]);
+            break;
+        end
+
+        if iter > 1
+            abbruch_rel   = abs(abbruch_m(iter) - abbruch_m(iter-1));
+            abbruch_rel_m = [abbruch_rel_m, abbruch_rel];
+            if ((abbruch_rel <= threshold_relative))
+                disp(['Difference between difference smaller than: ', num2str(threshold_relative)]);
+                break;
+            end
+        end
+
+        %% Delta_X Vektor überschreiben, x_dach überschreiben und iter erhoehen.
+        delta_x = delta_x_dach;
+        x_vec   = x_dach;
+        iter    = iter + 1;
+    end
+
+    %% Berechnung mit kalibrierten Daten
+
+    numOfDays = 365 * (year_end - year_begin +1);
+
+    % Neu einlesen für letzte berechnung
+    [timespan, step, h, grav_potent,r_moon,r_sun, reference] = read_data(AAM_FILE, year_begin, year_end);
+    c_20 = grav_potent(1, :);
+    c_21 = grav_potent(2, :);
+    s_21 = grav_potent(3, :);
+    c_22 = grav_potent(4, :);
+    s_22 = grav_potent(5, :);
+
+    w_initial = [x_vec(1); x_vec(2); x_vec(3)];
+        
+   % Omega0 and the love numbers are altered    
+    if variation >= 2
+        k_re      = [x_vec(4)];
+        k_im      = [x_vec(5)];
+    end
+
+    % Omega0, the love numbers and the trace are altered   
+    if variation == 3
+        tr        = [x_vec(6)];
+    end
+
+    omega_calibrated    = f_omega(w_initial,...
+                                  r_sun, r_moon,...
+                                  c_20, c_21, c_22, s_21, s_22, h,...
+                                  coefficient_T_g, coefficient_T_r, coefficient_F,...
+                                  GM_sun, GM_moon, k_re, k_im, A, B, C, tr, timespan, numOfDays);
+                              
+     %% Kalibrierte Daten als .txt speichern
+  
+     T = table(omega_calibrated(1,:)', omega_calibrated(2,:)', omega_calibrated(3,:)');
+     T.Properties.Description   = char(variations_in_calculation(variation));
+     T.Properties.VariableNames = {'omega_x' 'omega_y' 'omega_z'};
+     T.Properties.VariableUnits = {'rad/h' 'rad/h' 'rad/h'};
+     writetable(T, char(fileNames(variation)))
+end
+toc
+diary off
+
+%% Read in Data as rad/s for Plot
+omega_N = (7.2921151467064e-5) .* 3600;        % [rad/h]
+R       = 6378136.6;                           % [m]
+
+result_omega   = table2array(readtable(char(fileNames(1))))';
+result_love    = table2array(readtable(char(fileNames(2))))';
+result_trace   = table2array(readtable(char(fileNames(3))))';
+
+DATA_reference      = importdata('earthRotationVector.txt', ' ');
+reference_data(1,:) = DATA_reference(1:length(result_omega),2)' .* 3600;
+reference_data(2,:) = DATA_reference(1:length(result_omega),3)' .* 3600;
+reference_data(3,:) = DATA_reference(1:length(result_omega),4)' .* 3600;
+
+%% Plotting all relevant Data
+
+xp_omega     = (R/omega_N) .* result_omega(1,:);
+yp_omega     = (R/omega_N) .* result_omega(2,:);
+xp_love      = (R/omega_N) .* result_love(1,:);
+yp_love      = (R/omega_N) .* result_love(2,:);
+xp_trace     = (R/omega_N) .* result_trace(1,:);
+yp_trace     = (R/omega_N) .* result_trace(2,:);
+
+xp_reference = (R/omega_N) .* reference_data(1,:);
+yp_reference = (R/omega_N) .* reference_data(2,:);
+
+figure(1)
 hold on
-plot(xp,yp)
-plot(xp_reference,yp_reference)
+plot(xp_omega,yp_omega, 'LineWidth',0.1)
+plot(xp_love,yp_love, 'LineWidth',0.1)
+plot(xp_trace,yp_trace, 'LineWidth',0.1)
+plot(xp_reference,yp_reference, 'LineWidth',0.1)
 hold off
 title('Polar Motion at Earth Surface')
-legend('omega corrected', 'reference data')
+legend('Only \omega_0', '\omega_0 and Love Numbers', '\omega_0, Love Numbers and trace' ,'reference data')
 ylabel('y[m]')
 xlabel('x[m]')
 axis equal
 savefig('CalibratedPolarPlot.fig')
-
-
-
-
-
-
-
-
-
-
 
 
