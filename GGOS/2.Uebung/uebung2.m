@@ -11,7 +11,7 @@ year_end           = 7;
 numOfDays          = 365 * (year_end - year_begin);
 max_iter           = 420;
 threshold_value    = 1e-8;
-threshold_relative = 1e-13;
+threshold_relative = 1e-12;
 
 variations_in_calculation = ["Only_omega0_is_altered"
                              "Omega0_and_the_love_numbers_are_altered" 
