@@ -260,7 +260,7 @@ yp           = (R/omega_N) .* omega_calibrated(2,:);
 xp_reference = (R/omega_N) .* reference(1,1:length(omega_calibrated)).*3600;
 yp_reference = (R/omega_N) .* reference(2,1:length(omega_calibrated)).*3600;
 
-figure(1)
+figure(2)
 hold on
 plot(xp,yp)
 plot(xp_reference,yp_reference)
