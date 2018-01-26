@@ -6,9 +6,9 @@ diary('logOutput.txt')
 diary on
 tic
 
-max_iter = 2;
+max_iter = 50;
 iter     = 1;
-threshold_value = 1e-9;
+threshold_value = 1e-8;
 
 G       = (6.674e-11) * 3600 * 3600;          % [m^3/(kg* h^2)]
 GM_sun  = (1.32712442076e20) * 3600 * 3600;   % [m^3/ h^2]
@@ -43,8 +43,9 @@ w_initial = reference(:,1) .*3600;
 
 %% delta_X Vektor
 %          w_initial_x,  w_initial_y,  w_initial_z,  k_re, k_im, tr  
-delta_x = [1e-8,         1e-8,           1e-8,       1e-8, 1e-8, 1e-8];
-x_vec   = [w_initial(1), w_initial(2), w_initial(3), k_re, k_im, tr]';
+delta_val = 1;
+delta_x   = [delta_val,       delta_val,    delta_val, delta_val, delta_val, 1e38];
+x_vec     = [w_initial(1), w_initial(2), w_initial(3), k_re     , k_im     , tr]';
 
 while iter <= max_iter
     disp(['Iteration: ', num2str(iter)]);
@@ -94,7 +95,7 @@ while iter <= max_iter
                                r_sun, r_moon,...
                                c_20, c_21, c_22, s_21, s_22, h,...
                                coefficient_T_g, coefficient_T_r, coefficient_F,...
-                               GM_sun, GM_moon, k_re, k_im, A, B, C, tr  * (1+ delta_x(6)), timespan);
+                               GM_sun, GM_moon, k_re, k_im, A, B, C, tr  + delta_x(6), timespan);
                          
     omega_0     = f_omega(w_initial,...
                           r_sun, r_moon,...
@@ -175,15 +176,15 @@ while iter <= max_iter
                               k_re + delta_x_dach(4),...
                               k_im + delta_x_dach(5),...
                               A, B, C,...
-                              tr  * (1+ delta_x(6)),...
+                              tr  + delta_x(6),...
                               timespan);    
                           
-    x_dach = x_vec + delta_x_dach;                      
+    x_dach = x_vec + delta_x_dach                      
     
     %% Abbruchsbedingung 
-    diff_corrected = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
+    diff_corrected           = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
     diff_corrected_mat{iter} = diff_corrected;
-    abbruch = abs(max(max(diff_corrected)));
+    abbruch                  = abs(max(max(diff_corrected)))
     if (abbruch <= threshold_value)
         disp(['Difference smaller than: ', num2str(threshold_value)]);
         break;
