@@ -6,7 +6,7 @@ diary('logOutput.txt')
 diary on
 tic
 
-max_iter = 30;
+max_iter = 3;
 iter     = 1;
 threshold_value = 1e-9;
 
@@ -42,18 +42,11 @@ s_22 = grav_potent(5, :);
 w_initial = reference(:,1) .*3600;
 
 %% delta_X Vektor
-%          w_initial_x, w_initial_y, w_initial_z, k_re, k_im, tr  
-delta_x = [1e-8,         1e-8,        1e-8,       1e-8, 1e-8, 1e-8];
-x0       = [w_initial(1), w_initial(2), w_initial(3), k_re, k_im, tr];
+%          w_initial_x,  w_initial_y,  w_initial_z,  k_re, k_im, tr  
+delta_x = [1e-8,         1e-8,           1e-8,       1e-8, 1e-8, 1e-8];
 
 while iter <= max_iter
     disp(['Iteration: ', num2str(iter)]);
-    
-    %% Reassigning x0 vektor
-    w_initial = [x0(1); x0(2); x0(3)];
-    k_re      = x0(4);
-    k_im      = x0(5);
-    tr        = x0(6);
     
     %% F(x)
     w_initial_x = [w_initial(1) + delta_x(1); w_initial(2);              w_initial(3)];
@@ -171,9 +164,7 @@ while iter <= max_iter
                               coefficient_T_g, coefficient_T_r, coefficient_F,...
                               GM_sun, GM_moon, k_re + delta_x_dach(4),...
                               k_im + delta_x_dach(5), A, B, C,...
-                              tr + delta_x_dach(6), timespan);
-                          
-    x_dach = x0 + delta_x_dach;               
+                              tr + delta_x_dach(6), timespan);             
     
     %% Abbruchsbedingung 
     diff_corrected = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
@@ -186,7 +177,6 @@ while iter <= max_iter
     
     %% Delta_X Vektor überschreiben, x_dach überschreiben und iter erhoehen.
     delta_x = delta_x_dach;
-    x       = x_dach;
     iter    = iter + 1;
 end
 
