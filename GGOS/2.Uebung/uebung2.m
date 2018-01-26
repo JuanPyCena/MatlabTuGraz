@@ -10,6 +10,8 @@ numOfDays = 730;
 max_iter  = 2;
 iter      = 1;
 threshold_value = 1e-8;
+threshold_relative = 1e-12;
+abbruch_m = [];
 
 G       = (6.674e-11) * 3600 * 3600;          % [m^3/(kg* h^2)]
 GM_sun  = (1.32712442076e20) * 3600 * 3600;   % [m^3/ h^2]
@@ -186,8 +188,15 @@ while iter <= max_iter
     diff_corrected           = omega_corrected - reference(:,1:length(omega_corrected)).*3600;
     diff_corrected_mat{iter} = diff_corrected;
     abbruch                  = abs(max(max(diff_corrected)))
-    if (abbruch <= threshold_value)
-        disp(['Difference smaller than: ', num2str(threshold_value)]);
+    abbruch_m                = [abbruch_m, abbruch];
+    
+    if ((abbruch <= threshold_value))        
+        disp(['Difference smaller than: ', num2str(threshold_relative)]);
+        break;
+    end
+    
+    if (iter > 1 && (abs(abbruch_m(iter) - abbruch_m(iter-1)) <= threshold_relative))
+        disp(['Difference between difference smaller than: ', num2str(threshold_relative)]);
         break;
     end
     
