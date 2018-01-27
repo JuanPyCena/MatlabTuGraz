@@ -435,6 +435,7 @@ hold off
 title('Angular velocity - w_z')
 ylabel('w_z [rad/s]')
 xlabel('Time [h]')
+savefig('CalibratedComponentPlot.fig')
 
 figure(3)
 hold on
@@ -447,6 +448,7 @@ legend('Only \omega_0', '\omega_0 and Love Numbers', '\omega_0, Love Numbers and
 title('Delta Length of day')
 ylabel('Length of Day [ms]')
 xlabel('Time [h]')
+savefig('CalibratedLODPlot.fig')
 
 
 
